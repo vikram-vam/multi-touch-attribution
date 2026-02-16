@@ -1,4 +1,4 @@
-# Multi-touch attribution: a complete learning resource guide
+# Multi-touch attribution: An Implementation-Focused Resource Guide
 
 **This curated collection of 70+ resources covers everything needed to ramp up on multi-touch attribution (MTA) — from foundational theory through production-ready Python code.** The guide is organized around eight topic areas, progressing from conceptual foundations through mathematical methods to practical implementation and industry context. Each resource is annotated with type, source, and a description of what it covers and why it matters. A suggested learning path at the end ties everything together for efficient ramp-up.
 
