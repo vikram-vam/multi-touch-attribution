@@ -1,8 +1,8 @@
-# Erie Insurance Multi-Channel Attribution Demo
+# P&C Insurance Multi-Channel Attribution Demo
 
 **Version:** 2.0 | **Status:** Production-Plausible Demo | **Framework:** Plotly Dash
 
-A comprehensive demonstration of advanced multi-touch attribution models specifically calibrated for Erie Insurance's 100% independent agent distribution model. This demo reveals how traditional last-click attribution systematically undervalues agent contributions and upper-funnel digital channels.
+A comprehensive demonstration of advanced multi-touch attribution models specifically calibrated for an Insurance Client's 100% independent agent distribution model. This demo reveals how traditional last-click attribution systematically undervalues agent contributions and upper-funnel digital channels.
 
 ## 🎯 Demo Objectives
 
@@ -17,14 +17,14 @@ This is a **sellable capability demo** designed to:
 ## 📁 Repository Structure
 
 ```
-erie-mca-demo/
+pnc-mca-demo/
 │
 ├── config/
 │   └── config.yaml                 # All parameters: data generation, models, UI
 │
 ├── src/
 │   ├── data_generation/
-│   │   └── synthetic_data_generator.py  # Erie-calibrated journey data
+│   │   └── synthetic_data_generator.py  # Client-calibrated journey data
 │   │
 │   ├── models/
 │   │   ├── heuristic_models.py     # Last-Click, Linear, Time-Decay, etc.
@@ -64,7 +64,7 @@ erie-mca-demo/
 1. **Clone or download the repository**
 
 ```bash
-cd erie-mca-demo
+cd pnc-mca-demo
 ```
 
 2. **Create virtual environment**
@@ -89,7 +89,7 @@ python main.py
 ```
 
 This will:
-- Generate 50,000 synthetic customer journeys with Erie-calibrated parameters
+- Generate 50,000 synthetic customer journeys with Client-calibrated parameters
 - Run 7+ attribution models (Last-Click, Shapley, Markov, etc.)
 - Validate results against mathematical axioms
 - Generate budget optimization scenarios
@@ -168,7 +168,7 @@ Modify brand colors in `config/config.yaml`:
 ```yaml
 ui:
   brand_colors:
-    primary: "#1f4788"      # Erie blue
+    primary: "#1f4788"      # Client blue
     secondary: "#e31c3d"    # Accent red
 ```
 
@@ -287,7 +287,7 @@ This demo implements methods from:
 1. **Pre-load the dashboard** before the meeting (run main.py beforehand)
 2. **Start with Executive Summary** — don't bury the insight
 3. **Let the visual speak** — pause after showing the comparison chart
-4. **Use "our agents" language** — make it about Erie, not "the data"
+4. **Use "our agents" language** — make it about Client, not "the data"
 5. **End with a question** — "What would it mean if agents are really 34% of conversions?"
 6. **Have Technical Appendix ready** — but only if they ask
 
@@ -297,7 +297,7 @@ This demo implements methods from:
 
 This demo is designed to lead to a 12-week POC:
 
-**Phase 1**: Data integration (Erie's GA4, CRM, agent platform)  
+**Phase 1**: Data integration (Client's GA4, CRM, agent platform)  
 **Phase 2**: Model calibration with real conversion data  
 **Phase 3**: Production deployment + training  
 **Phase 4**: Triangulation (MMM + incrementality experiments)
