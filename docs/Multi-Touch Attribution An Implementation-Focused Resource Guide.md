@@ -1,353 +1,231 @@
-# Multi-touch attribution: An Implementation-Focused Resource Guide
+# Multi-touch attribution: an implementation-focused resource guide
 
-**This curated collection of 70+ resources covers everything needed to ramp up on multi-touch attribution (MTA) — from foundational theory through production-ready Python code.** The guide is organized around eight topic areas, progressing from conceptual foundations through mathematical methods to practical implementation and industry context. Each resource is annotated with type, source, and a description of what it covers and why it matters. A suggested learning path at the end ties everything together for efficient ramp-up.
-
----
-
-## 1. MTA fundamentals: what it is, why it matters, and how models differ
-
-These introductory resources establish the core vocabulary and conceptual framework. Start here before diving into mathematical methods.
-
-**"Multi-Touch Attribution — What It Is, and How to Do It Well"**
-Adobe Experience Cloud Blog | Blog | [adobe.com/blog/basics/multi-touch-attribution](https://business.adobe.com/blog/basics/multi-touch-attribution)
-Covers MTA definition, how it differs from single-touch (first-touch, last-touch), and walks through the main MTA models — linear, time decay, U-shaped, W-shaped — using a relatable travel-site example. One of the clearest narrative introductions available.
-
-**"A Look at Multi-Touch Attribution & Its Various Models"**
-HubSpot Marketing Blog | Blog | [blog.hubspot.com/marketing/multi-touch-attribution](https://blog.hubspot.com/marketing/multi-touch-attribution)
-HubSpot's accessible primer on what makes MTA unique compared to first-touch and last-touch. Explains four common MTA models with practical examples. A strong starting point from a widely trusted marketing platform.
-
-**"Methods & Models: A Guide to Multi-Touch Attribution"**
-Nielsen (2019) | Industry Guide | [nielsen.com/insights/2019/methods-models-a-guide-to-multi-touch-attribution](https://www.nielsen.com/insights/2019/methods-models-a-guide-to-multi-touch-attribution/)
-Authoritative guide from a measurement industry leader covering rule-based models (last-touch, first-touch, even-weighting, position-based, time-decay, custom) alongside algorithmic/data-driven MTA. Excellent for understanding the industry-standard perspective on when each model type is most useful.
-
-**"An Introduction to Multi-Touch Attribution"**
-Twilio Segment Academy | Educational Article | [segment.com/academy/advanced-analytics/an-introduction-to-multi-touch-attribution](https://segment.com/academy/advanced-analytics/an-introduction-to-multi-touch-attribution/)
-In-depth piece with excellent analogies (the Oscar acceptance speech metaphor for attribution). Covers all model types and discusses implementation challenges including **cross-device tracking** — a topic many introductions skip. Particularly well-written.
-
-**"A Beginner's Guide to Attribution Model Frameworks"**
-Amplitude Blog | Blog | [amplitude.com/blog/attribution-model-frameworks](https://amplitude.com/blog/attribution-model-frameworks)
-Dives into rule-based vs. data-driven (algorithmic) attribution, explains how data-driven models use machine learning, and provides practical guidance on choosing the right model based on business model, strategy, and budget. Good for someone with a quantitative bent.
-
-**"The Difference Between Rule-Based and Data-Driven Attribution"**
-Roivenue | Blog | [roivenue.com/articles/the-difference-between-rule-based-and-data-driven-attribution](https://roivenue.com/articles/the-difference-between-rule-based-and-data-driven-attribution/)
-Focused comparison of rule-based vs. data-driven attribution methods, explicitly naming Shapley values, Markov chains, and neural networks as data-driven approaches. Concise and useful for understanding why data-driven models are preferred for serious optimization.
-
-**"Tips to Nail Your Marketing Attribution Model"**
-Think with Google — Murtaza Lukmani | Article | [thinkwithgoogle.com](https://www.thinkwithgoogle.com/intl/en-emea/marketing-strategies/data-and-measurement/overhaul-marketing-attribution-model/)
-Google's own perspective on why last-click is limited and how data-driven attribution delivers superior results. Includes practical implementation advice from Google's measurement team on pilot testing and cross-device, cross-channel attribution.
-
-**"Multi-Touch Attribution: What It Is, Models, & More"**
-Marketing Evolution | Guide | [marketingevolution.com/marketing-essentials/multi-touch-attribution](https://www.marketingevolution.com/marketing-essentials/multi-touch-attribution)
-Detailed overview covering all major model types plus implementation steps and the relationship between MTA and Media Mix Modeling. Includes clear Nike purchase-journey examples.
+**Multi-touch attribution (MTA) sits at the intersection of cooperative game theory, causal inference, and messy real-world data engineering — and the field is shifting fast.** This guide provides the mathematical foundations, state-of-the-art methods, practical implementation patterns, and data quality realities needed to build an MTA demo targeting a regional P&C carrier with an independent agent distribution model. The core tension to internalize: **observational-only MTA models produce 488–948% errors in estimated ad effects** (Gordon et al. 2023, Marketing Science), which is why the industry is converging on triangulation — MTA for tactical optimization, media mix modeling (MMM) for strategic allocation, and incrementality experiments for causal ground truth. For Erie Insurance's 100% independent agent model across 12 states, the offline-to-online attribution gap (digital ad → agent contact → policy binding) is the hardest unsolved problem you'll face.
 
 ---
 
-## 2. Shapley values and cooperative game theory for attribution
+## 1. Shapley value attribution: the mathematical core
 
-The mathematical core of data-driven attribution. These resources progress from the original theory through marketing-specific papers to hands-on code.
+> **★ START HERE:** Zhao et al. (2018), "Shapley Value Methods for Attribution Modeling in Online Advertising" — arXiv: https://arxiv.org/pdf/1804.05327. This is the single most implementation-relevant paper. It gives you the simplified computation formula, the ordered Shapley extension, and runtime benchmarks.
 
-### Foundational papers
+### Exact vs. approximate computation
 
-**"A Value for n-Person Games" (1953)**
-Lloyd S. Shapley, RAND Corporation | Seminal Paper | [rand.org/pubs/papers/P295.html](https://www.rand.org/pubs/papers/P295.html) | [PDF](https://www.rand.org/content/dam/rand/pubs/papers/2021/P295.pdf)
-The foundational paper that introduced the Shapley value — the theoretical bedrock underlying all Shapley-based attribution. Defines the value axiomatically via three properties (efficiency, symmetry, additivity) and proves a unique solution exists. Originally published in *Contributions to the Theory of Games, Vol. II* (Princeton University Press). **The RAND PDF is freely accessible.**
+The exact Shapley value requires evaluating **2^N coalitions** for N channels. With N=20 channels, that's 1,048,576 coalitions taking ~17 hours (Zhao et al. 2018). For N=10–15 channels, exact computation is feasible; above that, approximation is mandatory.
 
-**"Data-Driven Multi-Touch Attribution Models" (2011)**
-Xuhui Shao and Lexin Li | KDD '11, pp. 258–264 | [Semantic Scholar](https://www.semanticscholar.org/paper/Data-driven-multi-touch-attribution-models-Shao-Li/09c397be5c654041d55451022396b2ed26f0f56a) | [ResearchGate](https://www.researchgate.net/publication/221654662_Data-driven_multi-touch_attribution_models)
-**The first major paper bridging Shapley values and marketing attribution.** Proposes a probabilistic model to quantify attribution across advertising channels, using bagged logistic regression for stable estimates and Shapley values to distribute credit. Widely cited as foundational. Full text may require ACM access, but preprints are available.
+The three main approximation families:
 
-**"Shapley Value Methods for Attribution Modeling in Online Advertising" (2018)**
-Kaifeng Zhao, Seyed Hanif Mahboobi, Saeed R. Bagheri | arXiv preprint | [arxiv.org/abs/1804.05327](https://arxiv.org/abs/1804.05327)
-Simplifies Shapley value computation dramatically — **reducing analysis from 17 hours to ~2 minutes** in their example. Proposes an "ordered Shapley value" method that accounts for the sequence of channels visited by users. This is the paper explicitly referenced by Google's Ads Data Hub Shapley implementation. Freely available.
+- **Monte Carlo permutation sampling** (Štrumbelj & Kononenko 2014): Sample M random permutations, average marginal contributions. No good rule of thumb for optimal M, but convergence is empirically fast. The `shapley` Python library by Rozemberczki implements this along with Expected Marginal Contribution Approximation (Fatima et al.) and Multilinear Extension (Owen).
+- **Kernel-weighted regression** (Lundberg & Lee 2017, KernelSHAP): Formulates Shapley estimation as a weighted least-squares problem. The `shap` library (20K+ GitHub stars) is the dominant implementation.
+- **Regression-adjusted Monte Carlo** (Witter et al. 2025, arXiv:2506.11849): State-of-the-art combining sampling with linear regression, achieving **6.5× lower error** than Permutation SHAP and 3.8× lower than KernelSHAP. Allows XGBoost as the regression model while maintaining unbiased estimates.
 
-### Google's Shapley-based attribution work
+A comprehensive survey of all SV computation methods appears in Lin et al. (2025), "A Comprehensive Study of Shapley Value in Data Analytics" (VLDB 2025): https://www.vldb.org/pvldb/vol18/p3077-xie.pdf.
 
-**Shapley Value Analysis — Google Ads Data Hub Documentation**
-Google for Developers | Technical Documentation | [developers.google.com/ads-data-hub/guides/shapley](https://developers.google.com/ads-data-hub/guides/shapley)
-Official developer documentation for implementing Shapley attribution in Ads Data Hub. Shows SQL code examples calling `ADH.TOUCHPOINT_ANALYSIS` with `'SHAPLEY_VALUES'` as the model parameter. Uses the simplified method from Zhao et al. (2018). Updated September 2024.
+### The coalition value function v(S) — inclusive vs. exclusive
 
-**MCF Data-Driven Attribution Methodology**
-Google Analytics Help | Official Documentation | [support.google.com/analytics/answer/3191594](https://support.google.com/analytics/answer/3191594?hl=en)
-Explains how Google's Multi-Channel Funnels DDA works: analyzing path data to build conversion probability models, then applying Shapley values to assign partial credit via counterfactual gains. Includes a worked example with Organic Search, Display, and Email. Legacy UA documentation but the methodology explanation remains highly instructive.
+This is the most important modeling decision you'll make. The **inclusive formulation** defines v(S) = conversion probability given that all channels in S appeared in the journey (but other channels may have also appeared). The **exclusive formulation** defines v(S) = conversion probability given that *only* channels in S appeared. The inclusive formulation is standard in practice because **the exclusive formulation creates severe data sparsity** — many coalitions may never be observed in isolation. Zhao et al. (2018) use inclusive; Google's Data-Driven Attribution uses inclusive. Dalessandro et al. (2012), "Causally Motivated Attribution for Online Advertising" (ADKDD at KDD 2012, https://dl.acm.org/doi/10.1145/2351356.2351363, 166 citations), is the foundational paper connecting Shapley to causal attribution and defining v(S) via counterfactual probabilities.
 
-**"Toward Improving Digital Attribution Model Accuracy"**
-Stephanie Sapp and Jon Vaver, Google Inc. | Research Paper | [research.google.com/pubs/archive/45766.pdf](https://research.google.com/pubs/archive/45766.pdf)
-Internal Google research describing their Unified Data-Driven Attribution (UDDA) approach, which compares exposed vs. unexposed user sets. A key behind-the-scenes look at how Google built its attribution products.
+For **sparse coalition imputation** — when many coalitions are never observed — the practical approaches are: (1) use the inclusive formulation to maximize data per coalition, (2) treat unobserved coalitions as v(S)=0 (the Zhao et al. approach, which only sums over observed coalitions), (3) group fine-grained touchpoints into broader channel categories to reduce the coalition space, (4) train an ML model to predict v(S) from features of S. The `shapiq` library (PyPI) implements GaussianImputer and GaussianCopulaImputer for handling missing coalitions.
 
-### Tutorials and code for Shapley attribution
+### Time-weighted and ordered extensions
 
-**"Marketing Attribution: Step Up Your Marketing Attribution with Game Theory"**
-Reda Affane (Dataiku) | Medium / Data from the Trenches | [medium.com/data-from-the-trenches/marketing-attribution-e7fa7ae9e919](https://medium.com/data-from-the-trenches/marketing-attribution-e7fa7ae9e919)
-**One of the most complete applied tutorials available.** Starts from basics, builds up to the Shapley value solution with full mathematical exposition, and includes SQL for data prep and Python code implementing the Shapley equation. Walks through a two-channel example step by step before generalizing.
+Standard Shapley treats channels as unordered sets. To incorporate position/recency while preserving axioms:
 
-**"Multi-Touch Attribution Model Using Shapley Value"**
-Bernard (bernard-mlab.com) | Blog + GitHub | [Blog](https://bernard-mlab.com/post/mta-sharpley-value/) | [GitHub](https://github.com/bernard-mlab/Multi-Touch-Attribution_ShapleyValue)
-Clean Python implementation using a Kaggle dataset. Walks through power set generation, factorial computation, coalition worth, and Shapley formula from scratch. The blog provides excellent theoretical grounding in the four axioms (efficiency, symmetry, dummy, additivity). The GitHub repo contains complete runnable code.
+- **Ordered Shapley** (Zhao et al. 2018): Defines R_i(S∪{x_j}) as the contribution from users where x_j was the i-th touchpoint. Their results show touchpoint 1 gets 91.59% credit — a strong "introducer" effect.
+- **Counterfactual Adjusted Shapley Value (CASV)** (Singal et al. 2022, Management Science 68(10), originally WWW 2019, https://pubsonline.informs.org/doi/10.1287/mnsc.2021.4263): Uses a Markov chain model to inherently capture stage effects while preserving axiomatic properties. This is the most theoretically rigorous extension.
+- **Sum Game extensions** (Molina, Tejada & Weiss 2022, Annals of Operations Research, https://link.springer.com/article/10.1007/s10479-022-04944-5): Extends to handle repetition count and position of channels with axiomatic characterizations.
 
-**"Shapley Value Attribution Modeling" (Kaggle Notebook)**
-Jason Brewster | Kaggle | [kaggle.com/code/jasonbrewster/shapley-value-attribution-modeling](https://www.kaggle.com/code/jasonbrewster/shapley-value-attribution-modeling)
-Interactive, executable notebook on Kaggle implementing Shapley value attribution. Good for experimentation without local setup.
+### SHAP connection
 
-### Accessible Shapley value explainers
+SHAP (Lundberg & Lee, NeurIPS 2017) uses the identical Shapley formula but in a different "game": players = model features, v(S) = E[f(x) | features in S known]. In MTA, players = channels, v(S) = conversion probability when coalition S is present. **They are mathematically equivalent in structure but differ in practice**: MTA deals with observed coalitions from real journey data where v(S) may be undefined for unobserved coalitions, while SHAP can always evaluate v(S) via the model. Christoph Molnar's "Interpretable Machine Learning" book (Ch. 17–18, https://christophm.github.io/interpretable-ml-book/shapley.html) is the best practitioner explanation of both Shapley and SHAP.
 
-**"Shapley Values" — Interpretable Machine Learning Book, Chapter 17**
-Christoph Molnar | Free Online Book | [christophm.github.io/interpretable-ml-book/shapley.html](https://christophm.github.io/interpretable-ml-book/shapley.html)
-**Perhaps the single best accessible explanation of Shapley values for a quantitative audience.** Uses an apartment price prediction example to build intuition from scratch. Covers the formal definition, worked examples, estimation approaches, strengths, and limitations. The companion chapter on SHAP (Ch. 18) covers SHAP-specific extensions.
+### Key libraries for Shapley attribution
 
-**"The Shapley Value for ML Models"**
-Towards Data Science | Blog | [towardsdatascience.com/the-shapley-value-for-ml-models-f1100bff78d1](https://towardsdatascience.com/the-shapley-value-for-ml-models-f1100bff78d1/)
-Builds intuition starting from cooperative game theory and transitions to ML applications using a mortgage lending example. Covers all four axioms and contextualizes Shapley values as comparison-based explanations.
-
-### The SHAP connection
-
-**"A Unified Approach to Interpreting Model Predictions" (NeurIPS 2017)**
-Scott M. Lundberg and Su-In Lee | Paper | [arxiv.org/abs/1705.07874](https://arxiv.org/abs/1705.07874)
-The seminal SHAP paper showing that Shapley values are the unique solution satisfying local accuracy, missingness, and consistency for additive feature attribution. Unifies six existing explanation methods (LIME, DeepLIFT, etc.) under one framework. The theoretical connection to marketing attribution is direct: both use Shapley values to fairly allocate "credit" among "players."
-
-**SHAP Official Documentation — "An Introduction to Explainable AI with Shapley Values"**
-SHAP library (Scott Lundberg et al.) | Interactive Tutorial | [shap.readthedocs.io](https://shap.readthedocs.io/en/latest/example_notebooks/overviews/An%20introduction%20to%20explainable%20AI%20with%20Shapley%20values.html)
-Hands-on, progressive introduction with runnable Python code. Demonstrates waterfall plots, beeswarm plots, and interaction effects. Conceptual patterns transfer directly to attribution contexts.
+| Library | Language | URL | Notes |
+|---------|----------|-----|-------|
+| `marketing-attribution-models` | Python | https://pypi.org/project/marketing-attribution-models/ | Full MTA suite: Shapley, Markov, heuristics. Ordered Shapley support. **Best quick-start.** |
+| `shapley-attribution-model` | Python | https://github.com/ianchute/shapley-attribution-model | Direct Zhao et al. implementation |
+| `mta` | Python | https://github.com/eeghor/mta | Shapley + Markov + additive hazard + logistic regression |
+| `shapiq` | Python | https://pypi.org/project/shapiq/ | SOTA: 10+ approximators, interaction indices, imputers |
+| `shap` | Python | https://github.com/shap/shap | Train conversion model → SHAP for attribution. 20K+ stars |
+| `ChannelAttribution` | R/Python | https://cran.r-project.org/package=ChannelAttribution | Industry standard. Pro version adds Shapley |
 
 ---
 
-## 3. Markov chain attribution models and the removal effect
+## 2. Markov chain attribution: graph-based removal effects
 
-Markov chains model channel sequencing and transition probabilities, offering a complementary approach to Shapley values. These resources cover the foundational theory, the key "removal effect" methodology, and practical implementations.
+> **★ START HERE:** Anderl, Becker, von Wangenheim & Schumann (2014/2016), "Mapping the Customer Journey: A Graph-Based Framework for Online Attribution Modeling" — SSRN: https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2343077 (published in International Journal of Research in Marketing 33(3), 2016). Then read the ChannelAttribution white paper: https://channelattribution.io/pdf/ChannelAttributionWhitePaper.pdf.
 
-### Foundational paper
+### The absorbing Markov chain framework
 
-**"Mapping the Customer Journey: A Graph-Based Framework for Online Attribution Modeling"**
-Eva Anderl, Ingo Becker, Florian von Wangenheim, Jan Hendrik Schumann | Paper | [SSRN (2014 working paper)](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2343077) | [Published version (2016)](https://www.sciencedirect.com/science/article/abs/pii/S0167811616300349)
-**THE foundational paper for Markov chain attribution.** Published in *International Journal of Research in Marketing*, Vol. 33(3), pp. 457–474 (2016). Introduces a graph-based framework modeling multichannel customer journeys as first- and higher-order Markov walks. Evaluated on four large real-world datasets. Establishes the removal effect methodology for channel importance measurement and demonstrates substantial differences from heuristic methods.
+Customer journeys are modeled as walks on a directed graph. States = {START, Channel_1, ..., Channel_N, CONVERSION, NULL}. CONVERSION and NULL are absorbing states (once entered, never left). The transition matrix in canonical form is P = [[Q, R], [0, I]] where Q is the transient-to-transient submatrix and R is transient-to-absorbing. The **fundamental matrix** N = (I−Q)^{−1} gives expected visits to each transient state, and the **absorption probability matrix** B = NR gives the probability of ending in each absorbing state from each starting state. The key quantity is B_{START, CONVERSION} = overall conversion probability.
 
-### Tutorials explaining the removal effect and Markov approach
+The **removal effect** for channel c: redirect all transitions into c toward NULL, recompute B, measure the drop in P(START → CONVERSION). Normalize across all channels so credits sum to total conversions. Grinstead & Snell's textbook (https://stats.libretexts.org/Bookshelves/Probability_Theory/Introductory_Probability_(Grinstead_and_Snell)/11:_Markov_Chains/11.02:_Absorbing_Markov_Chains) provides the standard undergraduate-level treatment of absorbing chains.
 
-**AnalyzeCore Blog Series (3 parts)**
-Sergii Bryl' | Blog Series | [Part 1](https://www.analyzecore.com/2016/08/03/attribution-model-r-part-1/) | [Part 2](https://www.analyzecore.com/2017/05/31/marketing-multi-channel-attribution-model-r-part-2-practical-issues/) | [Part 3](https://www.analyzecore.com/2017/09/28/marketing-multi-channel-attribution-model-based-on-sales-funnel-with-r/)
-**The single most-referenced tutorial on Markov chain attribution.** Part 1 covers Markov chain concepts, transition matrices, removal effect, and R implementation. Part 2 addresses practical issues: handling Direct traffic, missing values, higher-order chains, duplicated touchpoints. Part 3 introduces a Sales Funnel hybrid approach. Includes complete R code with visualizations. Widely cited as the best practical introduction.
+Two computation approaches exist: **exact matrix absorption** via (I−Q)^{−1} inversion (clean, deterministic, but scales as O(N³)), and **simulation-based Monte Carlo** (generate millions of random paths, measure conversion rate drops). The ChannelAttribution package uses the simulation approach for flexibility with conversion values and higher-order models.
 
-**"Markov Chain Attribution — Simple Explanation of Removal Effect"**
-Serhii Puzyrov | Blog | [serhiipuzyrov.com](https://serhiipuzyrov.com/2019/07/markov-chain-attribution-simple-explanation-of-removal-effect/)
-Explains removal effect math in the simplest possible way, without formulas. Uses a 4-path example to show step-by-step how removal effect is computed. Ideal for someone who finds the formal math intimidating.
+### Higher-order chains and state space explosion
 
-**"A Beginner's Guide to Channel Attribution Modeling in Marketing (using Markov Chains)"**
-Analytics Vidhya (2018) | Tutorial | [analyticsvidhya.com](https://www.analyticsvidhya.com/blog/2018/01/channel-attribution-modeling-using-markov-chains-in-r/)
-Comprehensive beginner-friendly tutorial. Explains Markov chain properties (state space, transition operator), removal effect with step-by-step calculations, and implements attribution in R using ChannelAttribution. Includes heuristic vs. Markov model comparison visualizations.
+A k-th order Markov chain conditions on the previous k states, creating compound states. For N channels, the state space is **N^k**: a 2nd-order chain with 10 channels has 100 compound states; 3rd-order has 1,000. Anderl et al. found **3rd order often most proficient** in practice. Kakalejčík et al. (2018) used the Global Dependency Level (GDL) estimator and found 4th order optimal for Slovak e-commerce data.
 
-**"Markov Chain Attribution Modeling [Complete Guide]"**
-Adequate Digital | Guide | [adequate.digital](https://adequate.digital/en/markov-chain-attribution-modeling-complete-guide/)
-Thorough walkthrough covering the mathematical foundation, removal effect formula, normalization, and the important problem of handling loops in Markov graphs (which significantly complicate probability calculations).
+**Variable-order Markov models (VMMs)** let the conditioning context length vary based on the specific realization — also called context trees or probabilistic suffix trees. They achieve "a great reduction in the number of model parameters" compared to fixed higher-order chains. The **Mixture Transition Distribution (MTD) model** (Berchtold & Raftery 2002, Statistical Science 17(3), https://projecteuclid.org/journals/statistical-science/volume-17/issue-3/The-Mixture-Transition-Distribution-Model-for-High-Order-Markov-Chains/10.1214/ss/1042727943.pdf) uses additive mixing of first-order matrices instead of N^k parameters — highly relevant for avoiding state space explosion.
 
-**"How to Calculate Removal Effects in Markov Chain Attribution?"**
-Erika Gintautas (Mister Spex Tech Blog) | Blog | [blog.misterspex.tech](https://blog.misterspex.tech/how-to-calculate-removal-effects-in-markov-attribution-4a44a2c3c15c)
-A practitioner's deep dive into removal effect calculation using stochastic simulations — replicating what ChannelAttribution does internally. Explains why simple textbook examples don't scale to real data, with Python code on GitHub. Valuable for understanding what's happening "under the hood."
+### Transition probability estimation
 
-**"7 Lessons From Building 20 Markov Chain Attribution Models on Real Datasets"**
-Ridhima Kumar (Aryma Labs) | Blog | [Medium](https://ridhima-kumar0203.medium.com/7-lessons-from-building-20-markov-chain-attribution-models-on-real-datasets-f30ee5562be8)
-Practical lessons from production implementations. Key takeaways: **~60% of work is data preprocessing**; timestamp ordering is critical; break data into converting vs. non-converting paths; interpret results through domain experience. Great for practitioners moving from theory to practice.
+Standard MLE: p(i→j) = count(i→j) / count(transitions from i). For zero-count transitions, use **Dirichlet priors** (conjugate to multinomial likelihood): posterior is Dirichlet with updated concentration parameters. Small symmetric α (e.g., α=1/N) yields non-zero posterior estimates for unobserved transitions. Heiner et al. (2022, JCGS, https://www.tandfonline.com/doi/full/10.1080/10618600.2021.1979565) develop **sparse Dirichlet mixture priors** specifically for high-order Markov chains — directly addressing the zero-count problem. Stan's user guide (Section 2.6, https://mc-stan.org/docs/2_18/stan-users-guide/hmms-section.html) shows explicit code for Dirichlet priors on transition probabilities.
 
-### R and Python packages
+### When removal effect diverges from Shapley
 
-**ChannelAttribution R Package**
-Davide Altomare and David Loris | R Package (CRAN) | [CRAN](https://cran.r-project.org/package=ChannelAttribution) | [White Paper PDF](https://channelattribution.io/pdf/ChannelAttributionWhitePaper.pdf)
-The most widely-used Markov chain attribution implementation. Key functions: `markov_model()`, `heuristic_models()`, `choose_order()`, `transition_matrix()`. The white paper is an excellent pedagogical resource with worked examples and complete R and Python code.
+Singal et al. (2022, Management Science) is the definitive comparison. **Removal effect overweights high-traffic channels** — channels appearing in more journeys get inflated credit because removing them disrupts more paths. Additional divergence points: Markov naturally captures sequence ordering while standard Shapley is sequence-agnostic; Markov is less sensitive to noisy/sparse data; and removal effect normalization "unfairly shifts attributed value from single-channel paths and shorter paths to longer conversion paths" (Adequate Digital). For choosing between them: Markov scales better computationally, Shapley has stronger axiomatic guarantees and is used by Google's DDA.
 
-**ChannelAttribution Python Library**
-Davide Altomare and David Loris | Python Package | [PyPI](https://pypi.org/project/ChannelAttribution/) | [GitHub](https://github.com/DavideAltomare/ChannelAttribution)
-Official Python port of the R package. Implements k-order Markov model plus heuristic models. Install via `pip install ChannelAttribution`.
+### Key Markov implementation resources
+
+Sergii Bryl's AnalyzeCore tutorial (https://www.analyzecore.com/2016/08/03/attribution-model-r-part-1/) is the most widely-referenced practitioner walkthrough. The Adequate Digital complete guide (https://adequate.digital/en/markov-chain-attribution-modeling-complete-guide/) covers normalization issues and practical order selection. The Databricks Solution Accelerator (https://www.databricks.com/blog/2021/08/23/solution-accelerator-multi-touch-attribution.html) provides production-grade PySpark implementation.
 
 ---
 
-## 4. Identity resolution: connecting users across devices and channels
+## 3. State-of-the-art approaches deployed in industry
 
-Identity resolution is the infrastructure layer that makes MTA possible. Without it, touchpoints from the same user across devices and channels cannot be linked.
+> **★ START HERE:** The Statsig technical survey by Yuzheng Sun (https://www.statsig.com/blog/marketing-attribution-models-tech-survey) is the single best overview covering all model families with mathematical formulations. Then read Gordon et al. (2023) on why observational MTA fails.
 
-**"What Is Identity Resolution and Why Is It Important?"**
-LiveRamp | Product Overview | [liveramp.com/identity-resolution](https://liveramp.com/identity-resolution/)
-Comprehensive overview from the industry's largest deterministic identity graph provider. Covers how LiveRamp's AbiliTec Identity Graph resolves offline PII and links to online identifiers. Key stat: **LiveRamp maintains PII on 245 million individuals in the U.S.**
+### Deep learning and attention models
 
-**"RampID Methodology"**
-LiveRamp Documentation | Technical Documentation | [docs.liveramp.com](https://docs.liveramp.com/identity/en/rampid-methodology.html)
-Deep technical explanation of how LiveRamp's identity graph actually works: AbiliTec offline PII merging, deterministic online device linking, RampID creation, quality assurance processes. Best resource for understanding identity graph architecture at a technical level.
+The field has moved from heuristics → game theory → deep learning → causal deep learning. Key papers with code:
 
-**"Probabilistic vs Deterministic Matching: Our Viewpoint"**
-LiveRamp Blog | Blog | [liveramp.com/blog/probabilistic-vs-deterministic](https://liveramp.com/blog/probabilistic-vs-deterministic/)
-Authoritative comparison of the two matching methods. Key insight: deterministic should be the backbone of marketing identity, while probabilistic adds complementary scale but introduces more false positives. **LiveRamp's graph reaches 200M+ unique users deterministically and 600M+ matched mobile devices.**
+**DARNN** (Ren et al., CIKM 2018, https://arxiv.org/abs/1808.03737, code: https://github.com/rk2900/deep-conv-attr): Dual-attention RNN that learns attribution via attention mechanisms from conversion estimation. Introduces a budget-allocation-based evaluation scheme that became the standard benchmark. TensorFlow implementation with Criteo dataset.
 
-**"What Is Identity Resolution?"**
-TransUnion Blog | Blog | [transunion.com/blog/what-is-identity-resolution](https://www.transunion.com/blog/what-is-identity-resolution)
-Explains how identity graphs store all known identifiers correlated to individuals. Covers the "layer cake" approach of using multiple identity methodologies. Notes that the **average US household has 20+ internet-enabled devices**.
+**DNAMTA** (Li et al., AdKDD 2018, https://arxiv.org/abs/1809.02230): LSTM+Attention model deployed at Adobe. Incorporates user demographics as control variables to reduce estimation bias. Attention weights serve as interpretable attribution scores.
 
-**TransUnion Enhanced Identity Graph Announcement (2024)**
-TransUnion Newsroom | Press Release | [newsroom.transunion.com](https://newsroom.transunion.com/transunion-announces-enhanced-identity-graph-for-marketing-solutions/)
-Details TruAudience's AI-powered four-stage identity process. Scale: 98% of U.S. adult population, **125M+ households, 250M adults, 1.9B phone numbers, 1B+ mobile devices, 1.6B emails.** Reports 40% reduction in duplicate CRM records and 30% increase in conversions for clients.
+**CausalMTA** (KDD 2022, https://dl.acm.org/doi/10.1145/3534678.3539108): Alibaba's approach decomposing confounding bias into static user attributes and dynamic features. Uses journey reweighting and causal conversion prediction. **Best causal deep learning approach with theoretical guarantees.**
 
-**"Identity Resolution Guide"**
-Experian Marketing | Industry Guide | [experian.com/marketing/resources/resolution/identity-resolution-guide](https://www.experian.com/marketing/resources/resolution/identity-resolution-guide)
-Comprehensive guide covering the full lifecycle: data onboarding, identity graphing, deterministic vs. probabilistic methods, and privacy considerations (COPPA, CCPA, GDPR). Notes consumers have 5+ identifiers on average. Emphasizes privacy-first solutions for the cookieless era.
+**Transformer-based attribution** (Lu & Kannan, Journal of Marketing Research 2025, https://journals.sagepub.com/doi/10.1177/00222437251347268): First major transformer framework for customer journey analysis. Heterogeneous mixture multi-head self-attention captures individual-level variation. Outperforms HMMs, point process models, and LSTMs.
 
-**"Identity Resolution: What It Is and How It Works"**
-Twilio/Segment | Blog | [twilio.com/en-us/blog/insights/identity-resolution](https://www.twilio.com/en-us/blog/insights/identity-resolution)
-Practical guide covering the core process: data collection → matching → profile unification → activation. Key stat: **98% of website visitors are anonymous**, making identity resolution critical.
+**CAMTA** (Kumar et al., ICDM 2020 Workshop, https://arxiv.org/abs/2012.11403): Combines counterfactual recurrent networks with attention for causal attribution. Uses domain adversarial training for treatment-invariant representations.
 
-**"Deterministic vs Probabilistic Matching, Explained"**
-BlueConic | Educational Guide | [blueconic.com/resources/probabilistic-and-deterministic-matching-explained](https://www.blueconic.com/resources/probabilistic-and-deterministic-matching-explained)
-Real-world examples across verticals. Explains that deterministic matching requires login/authentication (more precise, less frequent), while probabilistic is more scalable but less accurate. Good for understanding tradeoffs.
+### Survival analysis for time-to-conversion
 
----
+Survival models naturally handle the time dimension and censoring (users who haven't converted yet). Google's own research (Shender et al. 2020, https://arxiv.org/abs/2009.08432) frames MTA as a time-to-event problem for production use. The pioneering paper is Zhang, Wei & Ren (ICDM 2014, http://www0.cs.ucl.ac.uk/staff/w.zhang/rtb-papers/attr-survival.pdf), using Weibull distributions and hazard rates. Ji & Wang (AAAI 2017) extend this with additive ad effects. The `mta` Python library (https://github.com/eeghor/mta) implements additive hazard attribution alongside Markov and Shapley.
 
-## 5. Insurance and P&C marketing: the unique attribution challenge
+### Big tech's attribution evolution
 
-Erie Insurance's independent agent model creates a distinctive attribution problem: the carrier's digital marketing drives online research, but conversion happens offline through independent agents. These resources address that specific dynamic.
+**Google DDA** trains on all converting and non-converting paths, feeds every variable combination into a probabilistic model, and uses Shapley values to assign credit. It likely incorporates survival analysis (per Google's own 2020 paper). Google deprecated all heuristic models in September 2023, making DDA the default. It requires minimum **300 conversions/30 days and 3,000 ad interactions** — and remains a black box confined to the Google ecosystem.
 
-**"Marketing Intelligence for Insurance Agencies: Tracking, Attribution, and Data-Driven Growth"**
-David Carothers, Killing Commercial (Oct 2025) | Blog | [killingcommercial.com](https://killingcommercial.com/blog/marketing-intelligence-for-insurance-agencies-tracking-attribution-and-data-driven-growth/)
-**The most directly relevant resource found** — a detailed guide specifically for insurance agencies on marketing attribution. Covers why agencies struggle with attribution (disconnected CRM/website systems), building attribution foundations with UTM tracking and CRM integration, the "dark social" challenge, and AI-enhanced marketing analysis. Includes insurance-specific use cases for personal lines agencies and commercial agencies.
+**Google Meridian** (https://github.com/google/meridian): Open-source Bayesian hierarchical geo-level MMM. Key features include reach/frequency modeling, calibration with incrementality experiments, and Google Query Volume as a control variable. GA in 2025.
 
-**"Beyond Price: The Rise of Customer-Centric Marketing in Insurance"**
-McKinsey & Company | Research Report (PDF) | [mckinsey.com](https://www.mckinsey.com/~/media/mckinsey/dotcom/client_service/financial%20services/latest%20thinking/insurance/beyond_price_the_rise_of_customer-centric_marketing_in_insurance.ashx)
-Based on McKinsey's U.S. Auto Insurance Buyer Survey. Key findings: **U.S. auto insurers spend ~$6B annually on marketing**; digital and social channels influence 40% of consumer decisions; there are 9+ distinct auto insurance consumer segments. Raises fundamental questions about customer journey mapping and marketing effectiveness.
+**Meta Robyn** (https://github.com/facebookexperimental/Robyn): Open-source MMM using Ridge regression, Nevergrad optimization, and Prophet decomposition. Critically, it **calibrates models with ground truth from incrementality experiments** (Conversion Lift, GeoLift). 1,200+ GitHub stars.
 
-**"How Asian Insurers Can Use Digital Marketing to Fuel Growth"**
-McKinsey & Company | Research Article | [mckinsey.com](https://www.mckinsey.com/industries/financial-services/our-insights/how-asian-insurers-can-use-digital-marketing-to-fuel-growth)
-Contains globally applicable insights. Key finding: **best-in-class digital marketing can unlock 50–100% sales uplift** and reduce marketing investment 10–15% through attribution-based optimization. Discusses the digital-hybrid growth model where digital marketing drives leads to agents — directly relevant to Erie's independent agent distribution model.
+**Amazon's 2025 MTA system** (https://arxiv.org/abs/2508.08209): The most comprehensive public description of how a major platform combines RCTs with ML-based attribution. Uses an ensemble of causal ML models calibrated against randomized experiments.
 
-**"The Growth Engine: Superior Customer Experience in Insurance"**
-McKinsey & Company | Research Report | [mckinsey.com](https://www.mckinsey.com/industries/financial-services/our-insights/the-growth-engine-superior-customer-experience-in-insurance)
-Covers insurance customer journey mapping. Key insight: carriers deliver experiences via separate functions (marketing, distribution, underwriting, claims) managed by different executives, but customers see a single journey. Directly relevant to understanding **why attribution is complex in insurance**: the handoff between digital marketing, agent interactions, underwriting, and policy issuance creates attribution gaps.
+### Incrementality as ground truth
 
-**"Why Auto Insurance Marketers Are Turning to Performance Marketing"**
-Perform[cb] | Industry Article | [performcb.com](https://www.performcb.com/content-hub/why-auto-insurance-marketers-are-turning-to-performance-marketing/)
-Covers auto insurance attribution challenges and the shift to performance-based marketing. Notes that auto insurance decisions involve many touchpoints, making strong attribution models crucial. Claims performance marketing can increase ROI by 20% through better attribution.
+Incrementality experiments are the industry's accepted "gold standard" for causal measurement. **Ghost ads** (Johnson, Lewis & Nubbemeyer, JMR 2017, https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2620078) identify control group counterparts without serving ads, reducing variance by **5.9–16.4×** versus PSA/ITT approaches. **Geo-experiments** compare treatment vs. control regions using synthetic control methods — Meta's GeoLift library (https://github.com/facebookincubator/GeoLift) implements this. Google's CausalImpact (https://github.com/google/CausalImpact) uses Bayesian structural time series for quasi-experimental causal inference.
 
-**"Digital Marketing Insurance Industry: 10 Powerful 2025 Success Secrets"**
-AQ Marketing (2025) | Guide | [aqmarketing.com](https://aqmarketing.com/digital-marketing-insurance-industry/)
-Key insight encapsulating the core attribution challenge: **nearly 70% of insurance shoppers research online before contacting an agent, yet only 10% complete the entire purchase digitally.** This online-to-offline gap is the central attribution challenge for carriers like Erie.
-
-**"What Is Marketing Attribution? Basics, Benefits, and Best Practices"**
-Invoca | Guide | [invoca.com/blog/what-is-marketing-attribution-basics-benefits](https://www.invoca.com/blog/what-is-marketing-attribution-basics-benefits)
-Highly relevant because Invoca specializes in **phone call attribution** — the critical online-to-offline bridge for insurance. Notes that 68% of customers prefer phone calls for high-stakes purchases like insurance. Covers how to bridge the online-to-offline attribution gap using conversation intelligence.
+The consensus is **triangulation**: MTA for real-time tactical optimization, MMM for strategic budget allocation, incrementality experiments for causal validation. No single method alone is sufficient.
 
 ---
 
-## 6. Practical implementation: Python libraries, GitHub repos, and notebooks
+## 4. Data quality and capture challenges will define your project
 
-These hands-on resources let you build working attribution models. Three Python libraries stand out as must-know tools.
+> **★ START HERE:** Gordon et al. (2023), "Close Enough? A Large-Scale Exploration of Non-Experimental Approaches to Advertising Measurement" (https://arxiv.org/abs/2201.07055). This paper examining ~2,000 Meta campaigns proves observational attribution fails catastrophically, establishing why every challenge below matters.
 
-### Key Python libraries
+### The cookie landscape in 2026
 
-- **`mta` (Multi-Touch Attribution)** by Igor Korostil | [GitHub](https://github.com/eeghor/mta) — The most comprehensive open-source library. Implements 10+ models: first-touch, last-touch, linear, position-based, time-decay, Markov chain, Shapley value, Shao & Li model, logistic regression, and additive hazard. Features a chainable API. MIT licensed.
+Google **reversed course in July 2024** and abandoned third-party cookie deprecation in Chrome. By October 2025, Google retired most Privacy Sandbox APIs — including the Attribution Reporting API — citing "low levels of adoption" (https://privacysandbox.google.com/blog/update-on-plans-for-privacy-sandbox-technologies). Third-party cookies survive in Chrome's default settings. However, **Safari and Firefox already block third-party cookies by default**, meaning roughly 50% of the web is already cookieless. The practical implication: your MTA system must function in a mixed environment where half of journeys have cross-site tracking and half don't.
 
-- **`marketing-attribution-models`** by DP6 | [GitHub](https://github.com/DP6/Marketing-Attribution-Models) | [PyPI](https://pypi.org/project/marketing-attribution-models/) — Implements 6 heuristic models plus Markov Chains and Shapley Value. Works with Google Analytics Top Conversion Paths data. Install via `pip install marketing-attribution-models`.
+CPM fell **33%** when advertisers used Privacy Sandbox (Index Exchange testing), and publishers could lose **60% of revenue** without cookies (Criteo study) — the economic incentives to maintain cookies are powerful, which explains Google's reversal.
 
-- **`ChannelAttribution`** (Python port) by Altomare & Loris | [PyPI](https://pypi.org/project/ChannelAttribution/) | [GitHub](https://github.com/DavideAltomare/ChannelAttribution) — Official Python port of the widely-used R package. Implements k-order Markov model plus heuristic models.
+### iOS ATT devastated cross-device tracking
 
-### GitHub repositories and notebooks
+Apple's App Tracking Transparency opt-in rates sit at roughly **35% industry average** (Adjust Q2 2025), but the "double opt-in" math is brutal: both the advertiser and publisher apps need consent. With 10% opt-in on each side, only **1% of IDFAs are actually available** (Singular 2024). By Q3 2021, 80% of iOS users on social media platforms had opted out, causing advertisers to lose ~40% of Facebook/YouTube/Twitter impression volume. Meta cited ATT as a primary factor in slowing revenue growth in 2022.
 
-**Shapley Attribution Model (Zhao et al. Implementation)**
-Ian Chute | GitHub | [github.com/ianchute/shapley-attribution-model-zhao-naive](https://github.com/ianchute/shapley-attribution-model-zhao-naive)
-Python implementation of Zhao et al.'s simplified Shapley method. Includes both standard and ordered Shapley models. Simple API: feed customer journeys and get attribution scores.
+### Apple Mail Privacy Protection killed email attribution
 
-**Markov Chain Attribution from Scratch**
-Jake Benn | GitHub | [github.com/jakebenn/multi-touch-attribution-markov-chains](https://github.com/jakebenn/multi-touch-attribution-markov-chains)
-Clean proof-of-concept Jupyter notebook. Builds transition matrices and calculates removal effects from scratch. Good starting point for hands-on learners.
+Apple Mail accounts for **49.3% of all email opens** (Litmus, January 2025). MPP pre-loads tracking pixels on Apple's proxy servers, generating artificial "opens" for every email. Omeda's analysis across 80,000+ deployments and ~2 billion emails found open rates nearly **doubled** post-MPP. Email open rate is effectively dead as an attributable signal for Apple Mail users. Click rates remain unaffected and are now the primary email engagement metric. Litmus's analysis (https://www.litmus.com/blog/apple-mail-privacy-protection-for-marketers) details the cascading impacts: A/B subject line testing broken, send time optimization inaccurate, engagement-based segmentation unreliable.
 
-**Markov Chain Attribution (jerednel)**
-Jeremy Nelson | GitHub | [github.com/jerednel/markov-chain-attribution](https://github.com/jerednel/markov-chain-attribution)
-Lightweight Python package (`pip install markov_model_attribution`) implementing first-order Markov chain attribution. Simple API returning Markov-attributed conversions and removal effect matrix. Created for learning the process rather than using ChannelAttribution as a black box.
+### Server-side tracking as partial mitigation
 
-**"Multitouch Attribution Modelling" (Kaggle)**
-Hugh Huyton | Kaggle Notebook | [kaggle.com/code/hughhuyton/multitouch-attribution-modelling](https://www.kaggle.com/code/hughhuyton/multitouch-attribution-modelling)
-Executable multi-touch attribution notebook on Kaggle with real data.
+Facebook CAPI, Google Enhanced Conversions, and server-side GTM bypass browser-side restrictions by sending conversion data directly from your server. **Pixel-only tracking has dropped to roughly 40% attribution accuracy** (wetracked.io analysis); CAPI + pixel dual setup recovers much of the lost signal. Key implementation resources include Stape's comprehensive CAPI guide (https://stape.io/blog/conversions-api-explained) covering Meta, Google, Snapchat, and LinkedIn implementations.
 
-**"Python Implementation of Markov Chain Attribution Model"**
-Akanksha Anand | Medium Tutorial | [medium.com/@akanksha.etc302/python-implementation-of-markov-chain-attribution-model](https://medium.com/@akanksha.etc302/python-implementation-of-markov-chain-attribution-model-0924687e4037)
-Step-by-step from-scratch implementation using pandas, numpy, and seaborn. Uses a 240K-customer dataset. Covers data preprocessing, transition matrix construction, removal effect calculation, and result visualization.
+### Identity resolution failure modes
 
-**"Channel Attribution in Python"**
-Victor Angelo Blancada | Tutorial | [victorangeloblancada.github.io](https://victorangeloblancada.github.io/blog/2019/01/01/channel-attribution-in-python.html)
-Step-by-step Python tutorial with mathematical formulas and code. Builds transition probability matrices, computes removal rates, and derives conversion attribution through normalization.
+Deterministic matching (login-based) is accurate but has limited coverage — most visitors don't log in. Probabilistic matching expands coverage but introduces **false positive rates** that compound across identity graph operations. LiveRamp's graph reaches 200M+ unique users and 600M+ matched devices, but identity graphs go stale as users change devices, clear cookies, and move. Only **18% of marketers feel confident in their attribution data** due to identity fragmentation (MetaCTO). The practical guide from RudderStack (https://www.rudderstack.com/blog/deterministic-vs-probabilistic/) recommends a tiered approach: deterministic first, probabilistic to broaden coverage.
 
-### Key datasets
+### Walled gardens block cross-platform attribution
 
-**Criteo Attribution Modeling for Bidding Dataset**
-Criteo AI Lab | Dataset + Paper | [criteo.com](https://ailab.criteo.com/criteo-attribution-modeling-bidding-dataset/) | [Kaggle mirror](https://www.kaggle.com/datasets/sharatsachin/criteo-attribution-modeling)
-**The most authoritative public dataset for attribution modeling research.** ~16M impressions with timestamps, conversion data, click data, attribution labels, cost, and cost-per-order. Accompanies the paper "Attribution Modeling Increases Efficiency of Bidding in Display Advertising" (AdKDD 2017). CC BY-NC-SA 4.0.
+Google, Meta, and Amazon collectively control **70%+ of digital ad spending** (eMarketer) and don't share user-level data across platforms. Data clean rooms (Google Ads Data Hub, Meta Advanced Analytics, Amazon Marketing Cloud) offer limited access with strict privacy thresholds. Practical limitations documented by Tredence (https://www.tredence.com/blog/a-practical-guide-for-building-marketing-measurement-in-clean-rooms): data extraction minimums (10 for clicks/conversions, 50 for impressions in ADH), no cross-platform interoperability, no real-time access. As AdExchanger bluntly states: "Walled garden clean rooms are incredibly limited today. Forget trying to do advanced attribution or any kind of one-to-one targeting."
 
-### End-to-end tutorial
+### Biases you cannot ignore
 
-**"Build a Data Driven Attribution Model using GA4, BigQuery and Python"**
-Stacktonic.com | Tutorial | [stacktonic.com](https://stacktonic.com/article/build-a-data-driven-attribution-model-using-google-analytics-4-big-query-and-python)
-Comprehensive real-world tutorial connecting GA4 event-level exports via BigQuery to Python attribution models using the DP6 library. Builds both rule-based and data-driven (Markov) models with results saved back to BigQuery. Excellent for practitioners working with Google Analytics data.
+**Selection bias**: You only observe users who interact with ads — the non-interacting majority is invisible, creating systematically skewed data. **Survivorship bias**: Analyzing only converting users while ignoring the vast majority who didn't convert produces fundamentally flawed conclusions about channel effectiveness. **Consent-driven bias**: Users declining tracking correlate with specific demographics and privacy consciousness, creating non-random data gaps (SecurePrivacy analysis, https://secureprivacy.ai/blog/consent-attribution-tracking-digital-marketing). **Bot traffic**: **51%+ of all internet traffic is automated** (2025 Imperva Bad Bot Report), with click fraud rates averaging **15–25%** across campaigns. Global ad fraud losses reached **$84 billion** in 2023 (Juniper Research), projected to hit $172 billion by 2028.
 
-### Advanced: RNN + Shapley
+### Privacy regulation compounds everything
 
-**JD-MTA: Causally Driven Multi-Touch Attribution**
-Du, Zhong, Nair, Cui, Shou (Stanford/JD.com) | GitHub | [github.com/jd-ads-data/jd-mta](https://github.com/jd-ads-data/jd-mta)
-TensorFlow implementation of an RNN-based causal attribution model with Shapley value computation. Academic-grade code for learning advanced causal MTA approaches beyond heuristic Markov/Shapley methods.
+CPRA specifically prohibits service providers from "combining personal information received from one business with data from another" — but cross-publisher attribution fundamentally requires combining data (Gary Kibel, AdExchanger, https://www.adexchanger.com/data-driven-thinking/measurement-is-at-stake-when-cpra-takes-effect/). CPRA also requires processing opt-out preference signals (GPC), which restrict data by default. The patchwork of state privacy laws (Virginia VCDPA, Colorado CPA, Connecticut, etc.) creates jurisdiction-specific data availability rules. For a 12-state carrier like Erie, this means navigating up to 12 different consent regimes.
 
 ---
 
-## 7. Media mix modeling: the complementary top-down view
+## 5. Implementation patterns that make or break MTA systems
 
-MMM operates at an aggregate level using historical spend data, while MTA operates at the individual user level. Together they form a complete measurement framework. These resources provide enough context to understand the relationship.
+> **★ START HERE:** The Cometly SQL guide (https://www.cometly.com/post/multi-touch-attribution-sql) for journey construction, then the Adobe Analytics attribution components documentation (https://experienceleague.adobe.com/en/docs/analytics/analyze/analysis-workspace/attribution/models) for understanding lookback window sensitivity with worked examples.
 
-**"Multi-Touch Attribution vs. Marketing Mix Modeling"**
-Funnel.io (2023, updated 2025) | Blog | [funnel.io/blog/mta-vs-mmm](https://funnel.io/blog/mta-vs-mmm)
-The single best comparison article. Explains that **MTA is bottom-up** (granular, device-level, individual touchpoints) while **MMM is top-down** (aggregated historical data, channel/campaign level). Covers objectives, data types, strengths/weaknesses, and when to use each.
+### Journey assembly from raw events
 
-**"Meridian Is Now Available to Everyone" (January 2025)**
-Google Official Blog | Announcement | [blog.google](https://blog.google/products/ads-commerce/meridian-marketing-mix-model-open-to-everyone/)
-Google's official launch of their open-source Bayesian MMM. Uses Bayesian causal inference with aggregated privacy-safe data. Can incorporate Google Search query volume and YouTube reach/frequency data. 20+ certified measurement partners.
+Sessionization is the first technical step. **Time-based sessionization** (20–30 minute inactivity timeout) is the standard approach — GA4 uses 30 minutes. AWS's real-time clickstream blog (https://aws.amazon.com/blogs/big-data/create-real-time-clickstream-sessions-and-run-analytics-with-amazon-kinesis-data-analytics-aws-glue-and-amazon-athena/) demonstrates SQL window functions for session boundaries. Key decisions: how to handle repeat visits to the same channel (deduplicate or count separately), ordering touchpoints when timestamps share the same granularity, and whether to sessionize at the device level or user level. Intuit's clickstream case study (LinkedIn article by Irina Pragin) shows enterprise-scale solutions for cross-product sessionization, bot filtering, and event schema standardization.
 
-**Google Meridian — GitHub and Documentation**
-Google | Open-Source + Docs | [GitHub](https://github.com/google/meridian) | [Developer Docs](https://developers.google.com/meridian/docs/basics/meridian-introduction)
-The actual codebase and comprehensive documentation. Covers the four pillars (Accuracy, Actionability, Adaptability, Privacy-Durability), Bayesian regression with adstock/saturation, geo-level hierarchical modeling, and budget optimization. Includes colabs and tutorials.
+### Lookback windows change everything
 
-**Meta's Robyn — Open-Source MMM**
-Meta Marketing Science | Open-Source + Docs + Course | [GitHub](https://github.com/facebookexperimental/Robyn) | [Documentation](https://facebookexperimental.github.io/Robyn/) | [Analyst's Guide](https://facebookexperimental.github.io/Robyn/docs/analysts-guide-to-MMM/) | [Blueprint Course](https://www.facebookblueprint.com/student/path/253121)
-Meta's AI/ML-powered MMM package using Ridge regression, multi-objective evolutionary optimization, Prophet for time-series decomposition, and gradient-based budget allocation. R-based (Python in development). **1,200+ GitHub stars.** Meta Blueprint offers a free online course.
+Adobe Analytics provides the clearest demonstration: the same September journey (Paid Search → Social → Email → Display → $50 purchase) produces dramatically different attribution results under different model + window combinations. A **7-day window** might give Display 100% credit (last touch within window); a **90-day window** might split credit across all four channels. For insurance with 60–90 day consideration cycles, standard 7–30 day windows miss most of the journey. Google Analytics defaults to 30 days for acquisition events and 90 days for other events. **Extend lookback windows to at least 90 days for insurance**, ideally 180 days.
 
-**"Bayesian Media Mix Modeling for Marketing Optimization"**
-PyMC Labs (with HelloFresh) | Technical Blog | [pymc-labs.com](https://www.pymc-labs.com/blog-posts/bayesian-media-mix-modeling-for-marketing-optimization)
-Explains how Bayesian inference improves on frequentist approaches through prior knowledge incorporation, uncertainty quantification, and calibration with experiments. Based on real collaboration with HelloFresh. References the [PyMC-Marketing library](https://www.pymc-marketing.io/en/latest/guide/mmm/mmm_intro.html).
+### Channel taxonomy is the #1 failure point
 
-**"Introduction to Bayesian Methods for MMM"**
-Recast | Technical Blog + Notebook | [getrecast.com/bayesian-methods-for-mmm](https://getrecast.com/bayesian-methods-for-mmm/)
-Hands-on introduction with a Python notebook demonstrating Bayesian regression with PyMC3. Companion post ["Google Meridian MMM: Features and Limitations"](https://getrecast.com/google-meridian/) provides a balanced critique.
+"If you have bad data coming in, you're never going to be able to do multi-touch" (UTM.io). The MECE principle (Mutually Exclusive, Collectively Exhaustive) must govern channel categorization. Common failures: `facebook` vs `Facebook` vs `fb` fragmenting data; internal UTM tagging overwriting original source attribution; inconsistent use of utm_medium values. CXL's UTM guide (https://cxl.com/blog/utm-parameters/) is the most authoritative reference on proper parameter usage. Improvado's naming conventions guide (https://improvado.io/blog/utm-naming-conventions) provides three naming models (Cryptic, Positional, Key-Value) with governance frameworks.
 
----
+### Synthetic data that doesn't embarrass you
 
-## 8. Google Analytics 4's data-driven attribution under the hood
+For the Erie demo, convincing synthetic data needs: realistic channel mix proportions (heavy on search and agent referrals for insurance), appropriate journey lengths (3–8 touchpoints over 30–90 days), life-event triggers (home purchase, new car), conversion rates in the 2–5% range, and a healthy proportion of phone call touchpoints converting to agent interactions. The `mta` Python library and jakebenn's Jupyter notebook (https://github.com/jakebenn/multi-touch-attribution-markov-chains) provide starting templates for synthetic journey generation. Use Markov chains to generate synthetic paths from realistic transition matrices — this ensures statistical properties mirror real data.
 
-GA4's DDA became the default attribution model in 2023 when Google deprecated rule-based models. It uses Shapley values internally combined with machine learning.
+### Model validation without ground truth
 
-**"Get Started with Attribution" — GA4 Official Documentation**
-Google | Official Docs | [support.google.com/analytics/answer/10596866](https://support.google.com/analytics/answer/10596866?hl=en)
-The canonical reference. Describes three available models and details the DDA methodology: machine learning on converting and non-converting paths, counterfactual approach, and factors considered (time, device type, ad interactions, creative assets).
+In the absence of incrementality experiments, validate through: **cross-model convergence** (if Shapley, Markov, and a logistic regression all point to similar relative channel rankings, you have more confidence), **axiom compliance testing** (verify Shapley values sum to total conversions, dummy channels get zero credit, symmetric channels get equal credit), **holdout simulation** (remove known high-value channels from the model and verify the model detects their absence), and **sensitivity analysis** (how much do results change with ±7 days on the lookback window or ±1 Markov order?). The AjNavneet GitHub repo (https://github.com/AjNavneet/MultiTouch-Attribution-Marketing-Spend-Optimization) implements a full cross-model comparison pipeline with budget optimization.
 
-**"Google's GA4 Data-Driven Attribution Model Explained"**
-Adswerve | Blog | [adswerve.com](https://adswerve.com/blog/googles-ga4-data-driven-attribution-model-explained)
-Excellent practitioner-friendly explanation. Explains how DDA trains a probabilistic model and uses the Shapley algorithm to measure each feature's contribution. Uses a "factory" analogy for Shapley values. Covers GA4 setup and why each account's model is unique.
+### Common failure modes in production
 
-**"Everything You Need to Know About GA4 Data-Driven Attribution"**
-Growth Method | Blog | [growthmethod.com/data-driven-attribution](https://growthmethod.com/data-driven-attribution/)
-Comprehensive timeline of Google's DDA evolution (2013 → 2016 → 2020 → 2023 default). Explains that GA4's DDA is based on the **Shapley model with an added time-decay element** and covers the 2023 deprecation of rule-based models.
-
-**"The Shapley Value in Data-Driven Attribution: How It Works"**
-Last Click City | Blog | [lastclick.city](https://lastclick.city/the-shapley-value-in-data-driven-attribution.html)
-Focused quantitative walkthrough with a concrete three-channel example (organic search, paid search, display) showing all permutations and the mathematical calculation. Shows how DDA redistributes credit vs. last-click. Ideal for someone with a quantitative background.
+- **UTM data quality decay** over time as campaigns launch without governance
+- **Lookback window mismatches** between platforms (Facebook 7-day vs Google 30-day) creating double-counting
+- **Cookie fragmentation**: Corvidae found up to **80% of data incorrectly categorized** in GA360 Shapley due to cross-device failures
+- **Single-touch journey dominance**: When 60–70% of journeys have only one touchpoint, MTA degenerates to last-click
+- **Computational blowup**: Shapley becomes intractable above ~15 channels without approximation; higher-order Markov chains explode above order 3 with many channels
+- **Stale models**: Attribution weights drift as channel mix and user behavior change; models need regular retraining
 
 ---
 
-## Conclusion: a suggested four-week learning path
+## 6. Erie Insurance and agent-distributed P&C attribution
 
-The resources above form a complete curriculum. For efficient ramp-up on an MTA demo project, this sequencing maximizes understanding per hour invested:
+> **★ START HERE:** Invoca's insurance solution page (https://www.invoca.com/solutions/insurance) — purpose-built for the exact problem of attributing digital marketing to phone calls to independent agents.
 
-**Week 1 — Conceptual foundations.** Read the HubSpot and Adobe MTA introductions, then Nielsen's guide. Follow with Christoph Molnar's Shapley values chapter and the Funnel.io MMM-vs-MTA comparison. End with the AQ Marketing insurance piece to ground everything in the Erie-specific context. By Friday, you should be able to explain what MTA is, why Shapley and Markov are the two dominant data-driven approaches, and why insurance attribution is uniquely challenging due to the **70% online research / 10% online purchase gap**.
+### The central challenge of agent-distributed attribution
 
-**Week 2 — Mathematical methods.** Read the Shapley (1953) original and Shao & Li (2011) abstract. Work through the Last Click City Shapley walkthrough and Reda Affane's Medium tutorial with code. Read the Anderl et al. (2016) abstract and Serhii Puzyrov's removal effect explainer. Follow the AnalyzeCore Part 1 blog. Study the Google MCF DDA methodology documentation to see how Google implements Shapley internally.
+Erie Insurance operates a **100% independent agent model** across 12 states. The typical customer journey: user sees a digital ad → researches online → contacts an independent agent → agent quotes and binds a policy in their Agency Management System. The attribution gap occurs at the handoff from digital to agent. **Only ~10% of insurance purchases complete entirely online** (AQ Marketing). Standard 7–30 day lookback windows miss most insurance journeys, which span **60–90 days** (Astha Technology).
 
-**Week 3 — Hands-on implementation.** Install the `marketing-attribution-models` (DP6) and `mta` (eeghor) Python libraries. Run both Shapley and Markov attribution on the Criteo dataset. Work through the Bernard-ML Shapley notebook and Jake Benn's Markov notebook. Try the Stacktonic GA4-to-BigQuery-to-Python tutorial if GA4 data is available.
+### Call tracking bridges the gap
 
-**Week 4 — Integration and demo building.** Study the identity resolution resources (LiveRamp deterministic vs. probabilistic) to understand the data infrastructure layer. Review Google's Ads Data Hub Shapley documentation for production-scale patterns. Read the McKinsey insurance reports for stakeholder-facing context. Build the demo, combining Markov chain transition visualization with Shapley value credit allocation, using the DP6 or `mta` library as the computational backbone.
+Insurance callers convert at **10× the rate** of web leads (Invoca). Dynamic Number Insertion (DNI) assigns unique phone numbers per campaign/session, linking calls to specific browsing activity. Invoca's insurance solution attributes "each phone call from marketing source to quotes and policies written — even when calls are driven to independent agents, franchisees, and locations." It's HIPAA/SOC2/PCI compliant. eHealth case study results: **20% more conversions, 20% lower CPA, $3M savings**. CallRail and WhatConverts (https://www.whatconverts.com/case/financial-and-insurance/) offer similar capabilities at different price points.
+
+### AMS data quality is a minefield
+
+The major AMS platforms — Applied Epic, Vertafore AMS360, HawkSoft, EZLynx — **weren't built for data administrators** (RecordLinker, https://recordlinker.com/data-governance-insurance-guide/). UIs focus on producers, not data teams. There are **no industry-wide coding standards** for carriers, coverages, or lines of business. Critical issue for attribution: CRM↔AMS integration is typically **unidirectional** (marketing CRM → AMS), meaning AMS updates on policy binding don't flow back to marketing systems (Synatic analysis, https://www.synatic.com/blog/why-insurance-producers-need-access-to-ams-data-in-hubspot). Post-M&A data audits routinely reveal years of accumulated quality issues. Applied Epic is powerful but has a steep learning curve; AMS360 suffers from "system reverting to default account information even after policy-specific updates" (SelectHub). For the demo, expect that AMS data matching will require fuzzy matching on name + address + phone, not clean deterministic joins.
+
+### Life-event triggers and long consideration windows
+
+Insurance purchases cluster around life events: home purchases, new cars, marriages, births, relocations. These create natural attribution windows that don't align with standard marketing lookback periods. **70% of shoppers research online before contacting an agent** (AQ Marketing). Facebook and Pinterest advertising for insurance should emphasize assisted conversions and full-funnel measurement rather than last-click attribution, which systematically undervalues awareness channels in long sales cycles.
+
+For the demo, Google Meridian (https://github.com/google/meridian) is worth considering as a complementary approach — its Bayesian hierarchical geo-level modeling is ideal for measuring regional advertising impact on local agent sales across Erie's 12-state footprint, and it supports calibration with incrementality experiments at the geographic level.
+
+---
+
+## Conclusion: what to build first and why
+
+The demo should implement a **three-model comparison**: Shapley (using Zhao et al.'s simplified formula via `marketing-attribution-models`), Markov chain (using `ChannelAttribution`), and a heuristic baseline (last-touch, linear). This shows Erie the range of outcomes and builds trust through transparency. Use the `mta` Python library for the broadest model coverage in a single package.
+
+The single most important insight to communicate: **no attribution model produces causal ground truth from observational data alone**. Gordon et al.'s finding of 488–948% errors is not an outlier — it's the norm. The path forward is triangulation. For Erie specifically, the offline-to-online gap dwarfs the modeling sophistication question. Getting call tracking (Invoca/CallRail) integrated with campaign data and establishing even basic AMS-to-marketing data flow will deliver more value than perfecting the attribution algorithm. Build the data pipeline first, model second. The math is solved; the data engineering is where projects fail.
+
+For the mathematical foundation, start with Zhao et al. (2018) and Anderl et al. (2016). For industry context, read Gordon et al. (2023) and the Amazon Ads MTA paper (2025). For implementation, use the DP6 Marketing-Attribution-Models package or the `mta` library. And always remember: the model is only as good as the journey data feeding it.
