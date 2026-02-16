@@ -1,12 +1,12 @@
 # P&C Insurance Multi-Channel Attribution Demo
 
-**Version:** 2.0 | **Status:** Production-Plausible Demo | **Framework:** Plotly Dash
+**Version:** 0.1 | **Status:** Production-Plausible Demo | **Framework:** Plotly Dash
 
 A comprehensive demonstration of advanced multi-touch attribution models specifically calibrated for an Insurance Client's 100% independent agent distribution model. This demo reveals how traditional last-click attribution systematically undervalues agent contributions and upper-funnel digital channels.
 
 ## 🎯 Demo Objectives
 
-This is a **sellable capability demo** designed to:
+This is a **capability demo** designed to:
 
 1. **Create cognitive dissonance**: Show the dramatic difference between last-click (agents ~9%) and Shapley attribution (agents ~34%)
 2. **Demonstrate channel cooperation**: Digital channels and agents work together in a cooperative journey
