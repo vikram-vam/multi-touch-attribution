@@ -24,7 +24,7 @@ Current attribution (GA4 last-touch) credits **41% of conversions** to independe
 ## 🏗️ Architecture
 
 ```
-mca-erie/
+multi-touch-attribution/
 ├── config/                    # YAML configuration (channels, funnel, models)
 ├── data/
 │   ├── raw/                   # Generated synthetic data (Parquet)
