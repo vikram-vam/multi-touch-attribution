@@ -1,29 +1,27 @@
-.PHONY: help install run generate-data test clean
-
-help:
-	@echo "Erie MCA Demo - Available Commands"
-	@echo "===================================="
-	@echo "make install        Install dependencies"
-	@echo "make generate-data  Generate synthetic data and run models"
-	@echo "make run            Launch the dashboard"
-	@echo "make test           Run tests"
-	@echo "make clean          Remove generated data and cache"
+.PHONY: install generate-data run-attribution run-validation precompute test run clean
 
 install:
 	pip install -r requirements.txt
 
 generate-data:
-	python main.py
+	python scripts/generate_data.py --config config/synthetic_data.yaml
 
-run:
-	python app.py
+run-attribution:
+	python scripts/run_attribution.py --config config/model_params.yaml
+
+run-validation:
+	python scripts/run_validation.py
+
+precompute:
+	python scripts/precompute_cache.py
 
 test:
 	pytest tests/ -v
 
+run:
+	python app/app.py
+
 clean:
-	rm -rf data/synthetic/*
-	rm -rf data/results/*
-	rm -rf data/cache/*
-	find . -type d -name __pycache__ -exec rm -rf {} +
-	find . -type f -name "*.pyc" -delete
+	rm -rf data/raw/*.parquet data/processed/*.parquet
+	rm -rf __pycache__ .pytest_cache
+	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true

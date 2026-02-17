@@ -1,0 +1,32 @@
+# Erie MCA Demo — Funnel Stage Definitions
+
+funnel_stages:
+  - stage_name: awareness
+    erie_definition: "First exposure to Erie brand or auto insurance need activation"
+    key_events: ["ad_impression", "tv_spot_exposure", "social_view", "video_view"]
+    estimated_annual_volume: "2-5M impressions/exposures"
+    conversion_rate_to_next: 0.08
+
+  - stage_name: consideration
+    erie_definition: "Active research and comparison shopping"
+    key_events: ["site_visit", "quote_page_view", "agent_lookup", "comparison_search"]
+    estimated_annual_volume: "400-800K site visits"
+    conversion_rate_to_next: 0.15
+
+  - stage_name: quote_start
+    erie_definition: "Initiated online quote or contacted agent for quote"
+    key_events: ["quote_start_online", "agent_quote_request", "call_center_quote"]
+    estimated_annual_volume: "60-120K quote starts"
+    conversion_rate_to_next: 0.55
+
+  - stage_name: quote_complete
+    erie_definition: "Received a bindable quote with coverage and price"
+    key_events: ["quote_complete_online", "agent_quote_delivered"]
+    estimated_annual_volume: "33-66K completed quotes"
+    conversion_rate_to_next: 0.65
+
+  - stage_name: bind
+    erie_definition: "Policy issued — the conversion event for attribution"
+    key_events: ["policy_bind", "payment_received"]
+    estimated_annual_volume: "150-250K new auto binds"
+    conversion_rate_to_next: 1.0

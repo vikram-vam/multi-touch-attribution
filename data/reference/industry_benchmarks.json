@@ -1,0 +1,35 @@
+{
+    "auto_insurance_benchmarks": {
+        "avg_premium_personal_auto": 1200,
+        "avg_marketing_cost_per_bind": 350,
+        "avg_policyholder_lifetime_years": 5.2,
+        "avg_touchpoints_to_conversion": 3.8,
+        "agent_channel_bind_share_independent": 0.85,
+        "digital_channel_bind_share": 0.15,
+        "quote_to_bind_rate_industry": 0.30,
+        "considered_set_size_avg": 3.2,
+        "shopping_window_median_days": 10,
+        "shopping_window_mean_days": 16
+    },
+    "channel_benchmarks": {
+        "paid_search_cpc_brand": 3.50,
+        "paid_search_cpc_nonbrand": 8.50,
+        "display_cpm": 4.50,
+        "social_cpm": 7.00,
+        "video_cpm": 12.00,
+        "direct_mail_cost_per_piece": 0.85,
+        "email_cost_per_send": 0.02,
+        "tv_cpm": 15.00
+    },
+    "conversion_rate_benchmarks": {
+        "display_ctr": 0.003,
+        "search_ctr_brand": 0.08,
+        "search_ctr_nonbrand": 0.035,
+        "social_ctr": 0.012,
+        "email_open_rate": 0.22,
+        "email_click_rate": 0.035,
+        "site_visit_to_quote_start": 0.08,
+        "quote_start_to_complete": 0.55,
+        "quote_complete_to_bind": 0.65
+    }
+}

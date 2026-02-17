@@ -1,0 +1,37 @@
+# Erie MCA Demo — Attribution Model Hyperparameters
+
+model_params:
+  # Shapley parameters
+  shapley_min_coalition_obs: 30
+  shapley_use_time_weights: true
+  shapley_mc_samples: 10000
+  shapley_regression_mc_model: xgboost
+
+  # CASV parameters
+  casv_markov_order: 1
+
+  # Markov parameters
+  markov_order: 2
+  markov_null_state_name: "NULL"
+  markov_vmm_max_depth: 4
+
+  # Rule-based parameters
+  time_decay_half_life_click: 7.0
+  time_decay_half_life_impression: 3.0
+  position_based_first_weight: 0.40
+  position_based_last_weight: 0.40
+
+  # Deep learning parameters
+  lstm_hidden_dim: 64
+  lstm_num_layers: 2
+  lstm_epochs: 50
+  lstm_learning_rate: 0.001
+  transformer_n_heads: 4
+  transformer_d_model: 64
+  transformer_n_layers: 2
+  darnn_encoder_dim: 64
+  darnn_decoder_dim: 64
+
+  # General
+  journey_max_touchpoints: 20
+  session_timeout_minutes: 30

@@ -1,0 +1,20 @@
+# Erie MCA Demo — Synthetic Data Generation Parameters
+
+synthetic_data:
+  total_journeys: 150000
+  simulation_months: 12
+  quote_start_rate: 0.08
+  bind_rate_from_quotes: 0.35
+  avg_touchpoints_converting: 3.8
+  avg_touchpoints_non_converting: 1.6
+  agent_last_touch_pct: 0.60
+  journey_duration_median_days: 8.0
+  journey_duration_mean_days: 14.0
+  seasonality_peaks:
+    - March
+    - April
+    - September
+    - October
+  random_seed: 42
+  total_annual_spend: 100000000  # $100M estimated
+  avg_premium_value: 1200.0

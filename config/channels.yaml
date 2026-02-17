@@ -1,0 +1,172 @@
+# Erie MCA Demo — Channel Taxonomy Configuration
+# 13 channels calibrated to Erie Insurance's marketing mix
+
+channels:
+  - channel_id: independent_agent
+    display_name: "Independent Agent"
+    channel_group: agent
+    sub_channels: ["in_person", "phone", "email"]
+    touch_type: agent
+    lookback_window_days: 90
+    time_decay_half_life_days: 14.0
+    attribution_weight_default: 1.0
+    erie_estimated_bind_share: 0.85
+    funnel_role: conversion
+    data_source: AMS
+    color: "#2ECC71"
+
+  - channel_id: paid_search_brand
+    display_name: "Paid Search — Brand"
+    channel_group: search
+    sub_channels: ["google_brand", "bing_brand"]
+    touch_type: click
+    lookback_window_days: 30
+    time_decay_half_life_days: 7.0
+    attribution_weight_default: 1.0
+    erie_estimated_bind_share: 0.04
+    funnel_role: consideration
+    data_source: GA4
+    color: "#3498DB"
+
+  - channel_id: paid_search_nonbrand
+    display_name: "Paid Search — Non-Brand"
+    channel_group: search
+    sub_channels: ["google_nonbrand", "bing_nonbrand"]
+    touch_type: click
+    lookback_window_days: 30
+    time_decay_half_life_days: 7.0
+    attribution_weight_default: 1.0
+    erie_estimated_bind_share: 0.03
+    funnel_role: consideration
+    data_source: GA4
+    color: "#2980B9"
+
+  - channel_id: organic_search
+    display_name: "Organic Search"
+    channel_group: search
+    sub_channels: ["google_organic", "bing_organic"]
+    touch_type: click
+    lookback_window_days: 30
+    time_decay_half_life_days: 7.0
+    attribution_weight_default: 1.0
+    erie_estimated_bind_share: 0.03
+    funnel_role: consideration
+    data_source: GA4
+    color: "#1ABC9C"
+
+  - channel_id: display_programmatic
+    display_name: "Display / Programmatic"
+    channel_group: display
+    sub_channels: ["google_display", "programmatic_dv360", "retargeting"]
+    touch_type: impression
+    lookback_window_days: 14
+    time_decay_half_life_days: 3.0
+    attribution_weight_default: 0.6
+    erie_estimated_bind_share: 0.01
+    funnel_role: awareness
+    data_source: GA4
+    color: "#E74C3C"
+
+  - channel_id: paid_social
+    display_name: "Paid Social"
+    channel_group: social
+    sub_channels: ["facebook_feed", "instagram_feed", "facebook_stories"]
+    touch_type: impression
+    lookback_window_days: 14
+    time_decay_half_life_days: 3.0
+    attribution_weight_default: 0.7
+    erie_estimated_bind_share: 0.01
+    funnel_role: awareness
+    data_source: GA4
+    color: "#9B59B6"
+
+  - channel_id: tv_radio
+    display_name: "TV / Radio"
+    channel_group: broadcast
+    sub_channels: ["national_tv", "local_tv", "radio"]
+    touch_type: impression
+    lookback_window_days: 21
+    time_decay_half_life_days: 5.0
+    attribution_weight_default: 0.5
+    erie_estimated_bind_share: 0.02
+    funnel_role: awareness
+    data_source: media_agency
+    color: "#F39C12"
+
+  - channel_id: direct_mail
+    display_name: "Direct Mail"
+    channel_group: direct
+    sub_channels: ["prospect_mailer", "renewal_mailer", "cross_sell"]
+    touch_type: mail
+    lookback_window_days: 60
+    time_decay_half_life_days: 10.0
+    attribution_weight_default: 0.8
+    erie_estimated_bind_share: 0.02
+    funnel_role: consideration
+    data_source: CRM
+    color: "#E67E22"
+
+  - channel_id: email_marketing
+    display_name: "Email Marketing"
+    channel_group: direct
+    sub_channels: ["nurture_series", "promotional", "triggered"]
+    touch_type: email
+    lookback_window_days: 21
+    time_decay_half_life_days: 5.0
+    attribution_weight_default: 0.5
+    erie_estimated_bind_share: 0.01
+    funnel_role: consideration
+    data_source: ESP
+    color: "#F1C40F"
+
+  - channel_id: call_center
+    display_name: "Call Center"
+    channel_group: agent
+    sub_channels: ["inbound_call", "outbound_call"]
+    touch_type: call
+    lookback_window_days: 30
+    time_decay_half_life_days: 7.0
+    attribution_weight_default: 1.0
+    erie_estimated_bind_share: 0.02
+    funnel_role: conversion
+    data_source: telephony
+    color: "#16A085"
+
+  - channel_id: aggregator_comparator
+    display_name: "Aggregator / Comparator"
+    channel_group: aggregator
+    sub_channels: ["the_zebra", "policygenius", "nerdwallet"]
+    touch_type: click
+    lookback_window_days: 14
+    time_decay_half_life_days: 5.0
+    attribution_weight_default: 0.9
+    erie_estimated_bind_share: 0.01
+    funnel_role: consideration
+    data_source: affiliate
+    color: "#95A5A6"
+
+  - channel_id: direct_organic
+    display_name: "Direct / Organic Web"
+    channel_group: direct
+    sub_channels: ["direct_navigation", "bookmark", "app"]
+    touch_type: click
+    lookback_window_days: 30
+    time_decay_half_life_days: 7.0
+    attribution_weight_default: 1.0
+    erie_estimated_bind_share: 0.03
+    funnel_role: consideration
+    data_source: GA4
+    color: "#34495E"
+
+  - channel_id: video_ott_ctv
+    display_name: "Video / OTT / CTV"
+    channel_group: video
+    sub_channels: ["youtube", "hulu", "roku"]
+    touch_type: impression
+    lookback_window_days: 14
+    time_decay_half_life_days: 3.0
+    attribution_weight_default: 0.5
+    erie_estimated_bind_share: 0.01
+    funnel_role: awareness
+    data_source: ad_server
+    color: "#D35400"

@@ -1,0 +1,26 @@
+# Erie MCA Demo — UI Theme Configuration
+
+ui_theme:
+  colors:
+    bg_primary: "#0F1419"
+    bg_secondary: "#1A2332"
+    bg_tertiary: "#243044"
+    text_primary: "#E8ECF1"
+    text_secondary: "#8899AA"
+    text_accent: "#FFFFFF"
+    highlight: "#00D4AA"
+    positive: "#2ECC71"
+    negative: "#E74C3C"
+    warning: "#F39C12"
+    info: "#3498DB"
+
+  fonts:
+    heading: "DM Sans"
+    body: "Inter"
+    mono: "JetBrains Mono"
+
+  layout:
+    max_width: "100%"
+    page_padding: "2rem"
+    card_border_radius: "12px"
+    section_gap: "2rem"

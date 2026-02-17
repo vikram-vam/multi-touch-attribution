@@ -1,0 +1,69 @@
+# Erie MCA Demo — Demo Narrative Talking Points
+
+executive_summary:
+  opening_line: >
+    Erie invests $100M annually across 13 marketing channels to drive auto
+    policy growth. Today, last-click attribution tells you that Paid Search
+    is your best channel. But we both know that your 12,000 independent agents
+    close 85% of your business. Something doesn't add up.
+  transition_to_shapley: >
+    Watch what happens when we apply fair attribution — the same cooperative
+    game theory that powers Google's own Data-Driven Attribution — to your full
+    channel ecosystem, including your agent network.
+  closing_hook: >
+    The question isn't whether your attribution is wrong — it's how much
+    money you're leaving on the table because of it.
+
+attribution_comparison:
+  key_callout: >
+    Notice how agents jump from single digits to over 30% of attribution credit.
+    That's not model bias — it's Shapley's efficiency axiom ensuring every
+    conversion is fairly allocated.
+  objection_handler_ga4: >
+    GA4's data-driven attribution only sees digital touchpoints. For Erie,
+    that's 30-40% of the picture. Our model sees the full journey — including
+    the agent interaction that GA4 doesn't know about.
+  estimation_humility: >
+    We should be honest — Gordon et al. found that observational MTA can produce
+    errors of 5-10× in absolute ad effects. That's why we show you 15+ models
+    and a triangulation roadmap — no single model is trustworthy alone.
+
+journey_paths:
+  key_insight: >
+    The highest-converting customer journey follows the pattern
+    Display/Social → Search → Agent → Bind. This cooperating pattern
+    accounts for a significant share of all policy binds.
+  agent_multiplier: >
+    Any journey that includes an agent touchpoint converts at 4-5×
+    the rate of pure digital journeys. Agents aren't just closing —
+    they're the force multiplier for your entire marketing investment.
+
+budget_optimizer:
+  cfo_language: >
+    At Erie's estimated average premium of $1,200 per auto policy, the
+    projected additional binds represent meaningful first-year premium.
+    Over a 5-year average policyholder lifetime, the value compounds.
+  reallocation_insight: >
+    Shifting 15% of branded search spend to display/social projects a
+    15-25% improvement in cost-per-bind — without increasing total budget.
+
+identity_resolution:
+  pitch: >
+    Identity resolution is the foundation that makes multi-touch attribution
+    possible. Without it, the same customer appears as three different people
+    across desktop, mobile, and agent interactions.
+
+model_validation:
+  credibility: >
+    Every model in our arsenal passes formal axiom compliance testing.
+    Shapley values sum exactly to total conversions. Markov models produce
+    consistent rankings. Cross-model agreement (Spearman ρ > 0.70) confirms
+    these results aren't artifacts of method choice.
+
+technical_appendix:
+  triangulation_roadmap: >
+    Phase 1 (now): Multi-touch attribution for tactical channel optimization.
+    Phase 2 (6 months): Media mix modeling via Google Meridian for strategic
+    allocation across Erie's 12-state footprint.
+    Phase 3 (12 months): Incrementality experiments via geo-testing for
+    causal ground truth. This is the industry gold standard.

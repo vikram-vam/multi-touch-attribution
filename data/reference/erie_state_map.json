@@ -1,0 +1,103 @@
+{
+    "erie_facts": {
+        "headquarters": "Erie, Pennsylvania",
+        "founded": 1925,
+        "operating_states": [
+            "PA",
+            "OH",
+            "NY",
+            "NC",
+            "VA",
+            "MD",
+            "IN",
+            "WI",
+            "TN",
+            "WV",
+            "IL",
+            "KY",
+            "DC"
+        ],
+        "distribution_model": "100% independent agent",
+        "policies_in_force": "6M+",
+        "am_best_rating": "A+ (Superior)",
+        "auto_insurance_market_position": "Top 15 nationally, dominant in PA/OH",
+        "agent_count_estimate": "~12,000 independent agents",
+        "consumer_reports_rating": "Highest rated auto insurer (multiple years)",
+        "key_competitors_in_footprint": [
+            "State Farm",
+            "GEICO",
+            "Progressive",
+            "Allstate",
+            "Nationwide"
+        ],
+        "estimated_annual_marketing_spend": "$80-120M (estimate)",
+        "auto_new_business_binds_estimate": "150-250K annually"
+    },
+    "state_details": {
+        "PA": {
+            "name": "Pennsylvania",
+            "population_weight": 0.30,
+            "region": "northeast"
+        },
+        "OH": {
+            "name": "Ohio",
+            "population_weight": 0.12,
+            "region": "midwest"
+        },
+        "NY": {
+            "name": "New York",
+            "population_weight": 0.11,
+            "region": "northeast"
+        },
+        "NC": {
+            "name": "North Carolina",
+            "population_weight": 0.08,
+            "region": "southeast"
+        },
+        "VA": {
+            "name": "Virginia",
+            "population_weight": 0.07,
+            "region": "southeast"
+        },
+        "MD": {
+            "name": "Maryland",
+            "population_weight": 0.06,
+            "region": "mid_atlantic"
+        },
+        "IN": {
+            "name": "Indiana",
+            "population_weight": 0.05,
+            "region": "midwest"
+        },
+        "WI": {
+            "name": "Wisconsin",
+            "population_weight": 0.05,
+            "region": "midwest"
+        },
+        "TN": {
+            "name": "Tennessee",
+            "population_weight": 0.04,
+            "region": "southeast"
+        },
+        "WV": {
+            "name": "West Virginia",
+            "population_weight": 0.04,
+            "region": "mid_atlantic"
+        },
+        "IL": {
+            "name": "Illinois",
+            "population_weight": 0.04,
+            "region": "midwest"
+        },
+        "KY": {
+            "name": "Kentucky",
+            "population_weight": 0.03,
+            "region": "southeast"
+        },
+        "DC": {
+            "name": "District of Columbia",
+            "population_weight": 0.01,
+            "region": "mid_atlantic"
+        }
+    }
+}

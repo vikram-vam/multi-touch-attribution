@@ -1,0 +1,286 @@
+/* Erie MCA Demo — Global CSS
+   Dark theme with premium aesthetics */
+
+:root {
+    --bg-primary: #0F1419;
+    --bg-secondary: #1A2332;
+    --bg-tertiary: #243044;
+    --bg-card: #1E2D3D;
+    --text-primary: #E8ECF1;
+    --text-secondary: #8899AA;
+    --text-accent: #FFFFFF;
+    --highlight: #00D4AA;
+    --highlight-alt: #00B4D8;
+    --positive: #2ECC71;
+    --negative: #E74C3C;
+    --warning: #F39C12;
+    --border: #2A3A4A;
+    --card-radius: 12px;
+    --font-heading: 'DM Sans', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* ── Global Reset ── */
+body {
+    background-color: var(--bg-primary) !important;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ── Navbar ── */
+.navbar-custom {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%) !important;
+    border-bottom: 1px solid var(--border);
+    padding: 0.75rem 2rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+.navbar-brand-text {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: var(--text-accent) !important;
+    letter-spacing: -0.02em;
+}
+
+.navbar-brand-sub {
+    font-size: 0.75rem;
+    color: var(--highlight);
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.nav-link {
+    color: var(--text-secondary) !important;
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 0.5rem 1rem !important;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.nav-link:hover, .nav-link.active {
+    color: var(--text-accent) !important;
+    background: rgba(0, 212, 170, 0.1);
+}
+
+.nav-link.active {
+    border-bottom: 2px solid var(--highlight);
+}
+
+/* ── Page Container ── */
+.page-container {
+    padding: 2rem 2.5rem;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+.page-title {
+    font-family: var(--font-heading);
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-accent);
+    margin-bottom: 0.5rem;
+}
+
+.page-subtitle {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+}
+
+/* ── Metric Cards ── */
+.metric-card {
+    background: linear-gradient(145deg, var(--bg-card) 0%, var(--bg-secondary) 100%);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 1.25rem 1.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--highlight), var(--highlight-alt));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.metric-card:hover {
+    border-color: var(--highlight);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 212, 170, 0.1);
+}
+
+.metric-card:hover::before {
+    opacity: 1;
+}
+
+.metric-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.metric-value {
+    font-family: var(--font-heading);
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-accent);
+    line-height: 1.2;
+}
+
+.metric-delta {
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-top: 0.25rem;
+}
+
+.metric-delta.positive { color: var(--positive); }
+.metric-delta.negative { color: var(--negative); }
+
+.metric-subtitle {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+}
+
+/* ── Insight Callout ── */
+.insight-callout {
+    background: linear-gradient(135deg, rgba(0, 212, 170, 0.08) 0%, rgba(0, 180, 216, 0.05) 100%);
+    border: 1px solid rgba(0, 212, 170, 0.25);
+    border-left: 4px solid var(--highlight);
+    border-radius: 0 var(--card-radius) var(--card-radius) 0;
+    padding: 1rem 1.5rem;
+    margin: 1rem 0;
+}
+
+.insight-callout .insight-icon {
+    font-size: 1.25rem;
+    margin-right: 0.75rem;
+}
+
+.insight-callout .insight-text {
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* ── Model Selector Pills ── */
+.model-selector-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 1rem 0;
+}
+
+.model-pill {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 0.4rem 1rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: var(--font-body);
+}
+
+.model-pill:hover {
+    border-color: var(--highlight);
+    color: var(--text-primary);
+}
+
+.model-pill.active {
+    background: rgba(0, 212, 170, 0.15);
+    border-color: var(--highlight);
+    color: var(--highlight);
+}
+
+.model-pill.starred::after {
+    content: ' ★';
+    color: var(--warning);
+}
+
+/* ── Chart Containers ── */
+.chart-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.chart-title {
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-accent);
+    margin-bottom: 0.75rem;
+}
+
+/* ── Section Dividers ── */
+.section-gap {
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+}
+
+/* ── Data Tables ── */
+.dash-table-container {
+    border-radius: var(--card-radius);
+    overflow: hidden;
+}
+
+/* ── Animations ── */
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-in {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}
+
+/* ── Responsive ── */
+@media (max-width: 1200px) {
+    .page-container { padding: 1.5rem; }
+    .metric-value { font-size: 1.4rem; }
+}
