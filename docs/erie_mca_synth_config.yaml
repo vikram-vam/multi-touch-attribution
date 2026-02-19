@@ -1,0 +1,777 @@
+# ============================================================================
+# ERIE MCA CAPABILITY DEMO — SYNTHETIC DATA GENERATOR CONFIGURATION
+# ============================================================================
+#
+# PURPOSE: Master configuration for behavioral simulation engine.
+# Every parameter has an educated default calibrated to Erie Insurance's
+# auto insurance business model. Adjust any parameter to explore how
+# changes in business assumptions affect attribution results.
+#
+# USAGE:
+#   - Review defaults and rationale before first run
+#   - Adjust parameters that differ from your actual business knowledge
+#   - Run validation (built into generator) to catch contradictory settings
+#   - Use different random seeds to test attribution stability
+#
+# PARAMETER TYPES:
+#   [PRIMARY]  — Set directly by user; other values may derive from these
+#   [DERIVED]  — Auto-calculated from primary inputs; override if needed
+#   [TOGGLE]   — Boolean on/off switches
+#   [MATRIX]   — Multi-dimensional interaction tables
+#
+# ============================================================================
+
+
+# ----------------------------------------------------------------------------
+# 1. SIMULATION CONTROL
+# ----------------------------------------------------------------------------
+simulation:
+  random_seed: 42                  # Fixed for reproducibility; change for sensitivity testing
+  output_format: "parquet"         # Options: "parquet", "csv"
+  output_directory: "./output/source_systems/"
+  generate_unified_truth: true     # Also output a "god view" table for validation (never shown in demo)
+  log_level: "INFO"                # Options: "DEBUG", "INFO", "WARNING"
+  validation:
+    enabled: true                  # Run post-generation validation checks
+    fail_on_violation: false       # If true, abort if validation checks fail; if false, warn only
+    tolerances:
+      bind_count_pct: 0.10        # Allow ±10% deviation from target bind count
+      agent_involvement_pct: 0.04 # Allow ±4pp deviation from target agent involvement rate
+      journey_length_pct: 0.15    # Allow ±15% deviation from target mean journey length
+
+
+# ----------------------------------------------------------------------------
+# 2. POPULATION
+# ----------------------------------------------------------------------------
+population:
+
+  # --- Scale ---
+  total_prospects: 25000           # [PRIMARY] Total simulated prospects entering the funnel
+                                   # Range: 1,000–100,000
+                                   # Rationale: 25K gives strong statistical power for Shapley
+                                   # coalition estimation (8,192 coalitions across 13 channels)
+                                   # while keeping generation time under 5 minutes.
+
+  # --- Geographic Distribution ---
+  # [PRIMARY] Weights must sum to 1.0. Reflects Erie's 12-state + DC footprint.
+  # Rationale: Weighted by Erie's market presence and state population density.
+  # PA is heavily overweighted because Erie HQ is in Erie, PA and it's their deepest market.
+  geography:
+    PA: 0.35
+    OH: 0.15
+    NY: 0.10
+    IL: 0.08
+    IN: 0.07
+    WI: 0.05
+    MD: 0.05
+    VA: 0.04
+    WV: 0.03
+    NC: 0.03
+    TN: 0.03
+    KY: 0.01
+    DC: 0.01
+
+  # --- Demographics ---
+  # [PRIMARY] Age band distribution of auto insurance shopping population.
+  # Rationale: Skews younger than general population due to life-event triggers
+  # (new car, new driver, first-time buyer) concentrating in 25-44 range.
+  age_bands:
+    "25-34": 0.22
+    "35-44": 0.25
+    "45-54": 0.20
+    "55-64": 0.18
+    "65+":   0.15
+
+  # [PRIMARY] Digital sophistication affects channel interaction probabilities.
+  # High = comfortable with online research, self-service quoting, digital ads
+  # Medium = uses digital channels but prefers human guidance for decisions
+  # Low = minimal digital footprint, heavily agent-dependent
+  # Rationale: Erie's regional/traditional customer base skews more medium/low
+  # than a direct-to-consumer insurer like Geico or Progressive.
+  digital_sophistication:
+    high:   0.30
+    medium: 0.45
+    low:    0.25
+
+  # [PRIMARY] What triggered the insurance shopping event?
+  # Rationale: Trigger type influences journey length, channel mix, and urgency.
+  # New vehicle and rate shopping are the most common auto insurance triggers.
+  shopping_triggers:
+    new_vehicle:              0.30  # Just bought/leasing a car, needs coverage
+    rate_shopping:            0.25  # Unhappy with current premium, comparing options
+    moving:                   0.15  # Relocating to Erie's service area
+    new_driver:               0.10  # Teen/young adult added to household
+    life_event:               0.10  # Marriage, divorce, retirement — triggers reassessment
+    renewal_dissatisfaction:  0.10  # Current carrier renewal rate was too high
+
+  # [PRIMARY] Prior awareness of Erie Insurance brand.
+  # Rationale: Higher in core PA/OH markets (local brand recognition),
+  # lower in expansion states. Overall ~40% weighted average.
+  # This affects whether TV/display creates NEW awareness vs. reinforces existing.
+  prior_awareness:
+    default: 0.40             # Overall average
+    state_overrides:          # Optional per-state adjustments
+      PA: 0.75               # Erie HQ state — very high awareness
+      OH: 0.55               # Adjacent core market
+      NY: 0.30               # Expansion market
+      IL: 0.25               # Expansion market
+
+
+# ----------------------------------------------------------------------------
+# 3. CONVERSION FUNNEL
+# ----------------------------------------------------------------------------
+funnel:
+
+  # --- Primary Conversion Rates ---
+  # [PRIMARY] Each rate represents the probability of advancing to the next stage.
+  # The funnel is: Prospect → Quote-Start → Quote-Complete → Bind
+
+  prospect_to_quote_rate: 0.35     # Range: 0.15–0.50
+                                   # Rationale: Not all prospects reach quoting.
+                                   # Many are just browsing, comparing, or not ready.
+                                   # 35% reflects a considered purchase with moderate intent.
+
+  quote_to_complete_rate: 0.70     # Range: 0.50–0.85
+                                   # Rationale: Drop-off during quoting due to complexity,
+                                   # price shock, or "just checking" behavior. Agent-assisted
+                                   # quotes complete at higher rate (~80%) vs. online (~60%).
+
+  complete_to_bind_rate: 0.58      # Range: 0.35–0.70
+                                   # Rationale: Not all completed quotes convert. Erie competes
+                                   # on service/coverage, not price — some shoppers find
+                                   # cheaper options. Agent follow-up significantly lifts bind rate.
+
+  # [DERIVED] Calculated from above. Override to force a specific number.
+  # target_binds will be approximately:
+  #   total_prospects × prospect_to_quote × quote_to_complete × complete_to_bind
+  #   + agent_only_additional_binds
+  # With defaults: 25000 × 0.35 × 0.70 × 0.58 ≈ 3,553 + ~1,447 agent-only ≈ 5,000
+  target_binds: null               # Set to integer to override derived calculation
+                                   # Example: 5000
+
+  # --- Agent Involvement ---
+  # [PRIMARY] THE core Erie parameter.
+  agent_involvement_rate: 0.87     # Range: 0.70–0.98
+                                   # Rationale: Erie's 100% independent agent model means
+                                   # nearly all policy binds involve an agent interaction.
+                                   # 87% reflects that some online-only paths exist but are
+                                   # a small minority. Set higher (92-95%) if Erie is even
+                                   # more agent-dependent than estimated. Set lower (75-80%)
+                                   # to explore "what if digital self-service grew?"
+
+  digital_only_bind_rate: 0.13     # [DERIVED] = 1 - agent_involvement_rate
+                                   # Override only if you want asymmetric adjustment
+
+  multi_agent_touch_rate: 0.35     # Range: 0.15–0.50
+                                   # Rationale: Of agent-involved binds, 35% have 2+ agent
+                                   # interactions (initial consultation + follow-up/closing).
+                                   # Reflects the consultative nature of insurance buying.
+
+  # --- Agent-Only Paths ---
+  # [PRIMARY] Prospects who bind through agent WITHOUT any online quote.
+  # These are walk-ins, referrals, phone-first shoppers.
+  agent_only_bind_fraction: 0.29   # Range: 0.10–0.45
+                                   # Rationale: ~29% of total binds have no digital quote trail.
+                                   # These prospects may still have digital awareness touchpoints
+                                   # (saw a TV ad, received direct mail) but skipped online quoting.
+
+  # --- Quote Attribution Scope ---
+  # Both views will be generated for the dual-funnel comparison.
+  # "all_quotes" = every quote-start regardless of outcome
+  # "qualified_quotes" = only quotes that eventually led to a bind
+  # The difference between these two views IS the insight.
+  quote_attribution_views: ["all_quotes", "qualified_quotes"]
+
+
+# ----------------------------------------------------------------------------
+# 4. CHANNEL TAXONOMY
+# ----------------------------------------------------------------------------
+channels:
+
+  # Each channel has metadata + behavioral parameters.
+  # The state_interaction_probabilities matrix (Section 5) controls
+  # how likely each channel is to be engaged at each decision state.
+
+  taxonomy:
+    - id: "tv_radio"
+      name: "TV / Radio"
+      type: "broadcast"
+      data_source: "aggregate_media"
+      user_level_trackable: false
+      spend_trackable: true
+      avg_cpm: 12.00              # Cost per thousand impressions
+      notes: "Regional broadcast in Erie's key DMAs (Erie/Pittsburgh/Cleveland/Buffalo)"
+
+    - id: "display"
+      name: "Display (Programmatic)"
+      type: "digital_awareness"
+      data_source: "ad_platform"
+      user_level_trackable: true
+      spend_trackable: true
+      avg_cpm: 6.50
+      avg_cpc: 1.20
+      notes: "Programmatic display via The Trade Desk or DV360"
+
+    - id: "paid_social"
+      name: "Paid Social"
+      type: "digital_awareness"
+      data_source: "ad_platform"
+      user_level_trackable: true
+      spend_trackable: true
+      avg_cpm: 8.00
+      avg_cpc: 1.85
+      notes: "Meta (Facebook/Instagram) primary, some LinkedIn for commercial cross-sell"
+
+    - id: "search_nonbrand"
+      name: "Paid Search — Nonbrand"
+      type: "digital_consideration"
+      data_source: "google_ads"
+      user_level_trackable: true
+      spend_trackable: true
+      avg_cpc: 8.50
+      notes: "Keywords: 'car insurance quotes', 'auto insurance PA', etc."
+
+    - id: "search_brand"
+      name: "Paid Search — Brand"
+      type: "digital_intent"
+      data_source: "google_ads"
+      user_level_trackable: true
+      spend_trackable: true
+      avg_cpc: 1.50
+      notes: "Keywords: 'Erie Insurance', 'Erie auto quote'. Often last digital click."
+
+    - id: "seo_organic"
+      name: "SEO / Organic Search"
+      type: "digital_consideration"
+      data_source: "ga4"
+      user_level_trackable: true
+      spend_trackable: false       # Earned channel — no direct spend
+      notes: "Erie.com organic rankings + local SEO (agent pages)"
+
+    - id: "email_nurture"
+      name: "Email (Nurture)"
+      type: "digital_nurture"
+      data_source: "esp"
+      user_level_trackable: true
+      spend_trackable: true
+      avg_cost_per_send: 0.02
+      notes: "Drip campaigns after quote-start or agent locator use"
+
+    - id: "direct_mail"
+      name: "Direct Mail"
+      type: "physical"
+      data_source: "mail_vendor"
+      user_level_trackable: "partial"   # Matchback only
+      spend_trackable: true
+      avg_cost_per_piece: 0.85
+      notes: "Targeted mailers to households in Erie's service area"
+
+    - id: "referral_wom"
+      name: "Referral / Word-of-Mouth"
+      type: "social_proof"
+      data_source: "crm"
+      user_level_trackable: "partial"   # Lead source tag only
+      spend_trackable: false
+      notes: "Agent referrals, friend/family recommendations, online reviews"
+
+    - id: "agent_locator"
+      name: "Agent Locator (Website)"
+      type: "digital_bridge"
+      data_source: "ga4"
+      user_level_trackable: true
+      spend_trackable: false            # Owned channel
+      notes: "Erie.com 'Find an Agent' tool — key digital-to-agent handoff signal"
+
+    - id: "agent_interaction"
+      name: "Agent Interaction"
+      type: "offline_conversion"
+      data_source: ["ams", "call_tracking", "crm"]
+      user_level_trackable: "partial"   # Depends on call tracking + AMS data sharing
+      spend_trackable: "indirect"       # Agent support/commission, not media spend
+      notes: "Phone calls, office visits, agent-initiated outreach"
+
+    - id: "erie_direct"
+      name: "Erie.com Direct"
+      type: "digital_intent"
+      data_source: "ga4"
+      user_level_trackable: true
+      spend_trackable: false            # Owned channel
+      notes: "Direct visits to Erie.com (typed URL, bookmark). Indicates brand awareness."
+
+    - id: "retargeting"
+      name: "Retargeting / Remarketing"
+      type: "digital_reengagement"
+      data_source: "ad_platform"
+      user_level_trackable: true
+      spend_trackable: true
+      avg_cpm: 4.50
+      avg_cpc: 0.90
+      prerequisite_channels: ["display", "paid_social", "erie_direct", "seo_organic"]
+      notes: "Requires prior site visit. Re-engages prospects who didn't convert."
+
+
+# ----------------------------------------------------------------------------
+# 5. CHANNEL × DECISION-STATE INTERACTION MATRIX
+# ----------------------------------------------------------------------------
+# [MATRIX] Probability that a prospect interacts with each channel on a given
+# day, conditional on their current decision state.
+#
+# States: awareness → consideration → intent → action
+#
+# These probabilities are PER-DAY, not per-journey. A prospect in the
+# "consideration" state for 5 days will have 5 independent rolls against
+# these probabilities (with some channel-specific cooldown rules).
+#
+# READING THE MATRIX:
+#   A value of 0.25 for display/consideration means: on any given day that a
+#   prospect is in the consideration state, there's a 25% chance they're
+#   exposed to or engage with a display ad.
+#
+# MODIFIERS:
+#   These base probabilities are modified by:
+#   - Digital sophistication (low = 0.4× for digital channels, 1.5× for agent)
+#   - Geography (core PA/OH = 1.2× for TV, expansion states = 0.7×)
+#   - Shopping trigger (rate_shopping = 1.3× for search, new_vehicle = 1.2× for display)
+#   - Prior awareness (aware = 0.5× for TV awareness effect, 1.5× for brand search)
+
+state_interaction_matrix:
+
+  # Format: channel_id: [awareness, consideration, intent, action]
+  tv_radio:           [0.40, 0.15, 0.05, 0.02]
+  display:            [0.25, 0.30, 0.20, 0.10]
+  paid_social:        [0.15, 0.25, 0.15, 0.05]
+  search_nonbrand:    [0.05, 0.20, 0.35, 0.15]
+  search_brand:       [0.02, 0.10, 0.25, 0.30]
+  seo_organic:        [0.08, 0.15, 0.20, 0.10]
+  email_nurture:      [0.00, 0.10, 0.20, 0.15]   # 0 in awareness — can't email unknown prospects
+  direct_mail:        [0.15, 0.10, 0.05, 0.03]
+  referral_wom:       [0.05, 0.08, 0.10, 0.05]
+  agent_locator:      [0.00, 0.05, 0.25, 0.20]   # 0 in awareness — requires intent to search for agent
+  agent_interaction:  [0.02, 0.08, 0.30, 0.65]   # THE key parameter — spikes in action state
+  erie_direct:        [0.03, 0.12, 0.20, 0.25]
+  retargeting:        [0.00, 0.15, 0.25, 0.20]   # 0 in awareness — requires prior site visit
+
+  # --- Interaction Modifiers ---
+  modifiers:
+    digital_sophistication:
+      # Multiplier applied to digital channel probabilities
+      high:   { digital: 1.3, agent: 0.7 }   # More self-service, less agent-dependent
+      medium: { digital: 1.0, agent: 1.0 }   # Baseline
+      low:    { digital: 0.4, agent: 1.5 }   # Minimal digital, very agent-dependent
+
+    geography:
+      # Multiplier for TV/radio by market type
+      core_markets: 1.2             # PA, OH — heavier Erie TV presence
+      secondary_markets: 1.0        # IN, WI, MD
+      expansion_markets: 0.7        # NC, TN, VA — less Erie broadcast
+
+    shopping_trigger:
+      rate_shopping:    { search: 1.3, agent: 1.1 }     # Active comparison behavior
+      new_vehicle:      { display: 1.2, social: 1.1 }   # Broader research phase
+      moving:           { seo: 1.3, agent_locator: 1.4 } # "Insurance agents near me" behavior
+      new_driver:       { referral: 1.3, agent: 1.2 }   # Parents ask network for recommendations
+      life_event:       { email: 0.5, agent: 1.3 }      # Less responsive to nurture, more direct
+      renewal_dissatisfaction: { search_nonbrand: 1.4, search_brand: 0.6 } # Shopping competitors
+
+  # --- Channel Cooldowns (days) ---
+  # Minimum days between repeated interactions with same channel.
+  # Prevents unrealistic "saw display ad every single day" patterns.
+  cooldowns:
+    tv_radio: 1            # Can see an ad daily
+    display: 1             # Frequent but capped
+    paid_social: 1
+    search_nonbrand: 2     # Don't search every day
+    search_brand: 3        # Infrequent brand searches
+    seo_organic: 2
+    email_nurture: 5       # Realistic email cadence — weekly at most
+    direct_mail: 14        # Bi-weekly at most
+    referral_wom: 7        # One recommendation per week max
+    agent_locator: 3
+    agent_interaction: 3   # Agent calls/visits spaced out
+    erie_direct: 2
+    retargeting: 1         # Frequent retargeting is realistic
+
+
+# ----------------------------------------------------------------------------
+# 6. JOURNEY DYNAMICS
+# ----------------------------------------------------------------------------
+journey:
+
+  # --- Journey Length ---
+  # [PRIMARY] Touchpoint counts follow a truncated normal distribution.
+  converters:
+    length_mean: 6.8               # Range: 4.0–10.0
+    length_std: 2.5                # Range: 1.0–4.0
+    length_min: 2                  # Minimum 2 touchpoints (e.g., brand search → agent)
+    length_max: 20                 # Cap for extreme outliers
+    # Rationale: Insurance is a considered purchase. 6-7 touchpoints reflects
+    # the awareness → research → quote → agent → bind journey.
+
+  non_converters:
+    length_mean: 3.2               # Range: 1.5–6.0
+    length_std: 1.8                # Range: 0.8–3.0
+    length_min: 1                  # Some bounce after single touchpoint
+    length_max: 12                 # Some research extensively but never convert
+    # Rationale: Non-converters engage less deeply. Many are "window shoppers"
+    # or prospects for whom Erie wasn't the right fit (price, coverage, geography).
+
+  # --- Journey Duration ---
+  # [PRIMARY] Calendar days from first touchpoint to conversion (or exit).
+  duration:
+    converters_mean_days: 18       # Range: 7–45
+    converters_std_days: 12        # High variance — some are quick, some deliberate
+    converters_min_days: 1         # Same-day conversion (urgent need, walk-in)
+    converters_max_days: 90        # Extended research period
+
+    non_converters_mean_days: 11   # Range: 3–30
+    non_converters_std_days: 8
+    non_converters_min_days: 1
+    non_converters_max_days: 60    # Some research then silently disappear
+    # Rationale: Insurance shopping windows vary widely. Rate shoppers may
+    # convert in days; someone "thinking about it" may take weeks.
+
+  # --- State Transitions ---
+  # [MATRIX] Probability of moving between decision states on any given day.
+  # Each row sums to 1.0 (must stay, progress, or exit).
+  # "exit" = prospect leaves the funnel permanently (lost interest, chose competitor).
+  state_transitions:
+    #                   stay    progress  exit
+    awareness:        [0.35,   0.45,     0.20]
+    consideration:    [0.35,   0.40,     0.25]
+    intent:           [0.20,   0.55,     0.25]
+    # Rationale: Intent → Action has highest progress rate (0.55) because
+    # prospects at intent stage have done their research and are ready to act.
+    # Agent engagement at this stage further accelerates progression.
+
+  # --- State Transition Boosters ---
+  # Certain channel interactions boost the probability of progressing.
+  # Applied as additive boosts to the "progress" probability (capped at 0.90).
+  transition_boosters:
+    agent_interaction: 0.20        # Agent contact is the single strongest progression signal
+    agent_locator: 0.10            # Looking for agent = strong intent signal
+    search_brand: 0.08             # Searching for Erie by name = aware and interested
+    email_nurture: 0.05            # Nurture keeps prospect engaged
+    retargeting: 0.05              # Re-engagement prevents exits
+    referral_wom: 0.12             # Personal recommendation is powerful
+    search_nonbrand: 0.03          # Generic shopping — modest progression
+    display: 0.02                  # Awareness maintenance, small direct impact
+    tv_radio: 0.02                 # Same — keeps Erie top-of-mind
+
+
+# ----------------------------------------------------------------------------
+# 7. IDENTITY RESOLUTION PARAMETERS
+# ----------------------------------------------------------------------------
+identity:
+
+  # --- Fragmentation Scenarios ---
+  # [PRIMARY] Distribution of identity fragmentation types across prospects.
+  # These determine how difficult it is to stitch together a unified journey.
+  # Must sum to 1.0.
+  fragmentation_distribution:
+    clean_match: 0.25              # Full email/phone linkage across systems
+    cookie_churn: 0.20             # 2-3 GA4 identities due to cookie expiration
+    digital_only_no_agent_link: 0.15  # Online journey visible, agent interaction untracked
+    agent_only_no_digital: 0.12    # Walk-in/referral, zero digital trail
+    partial_bridge: 0.18           # Call tracking captures some agent contacts, not all
+    cross_device_gap: 0.10         # Mobile → desktop → agent = three different profiles
+
+  # --- System Match Rates ---
+  # [PRIMARY] Probability that a record in System A can be linked to System B.
+  # These represent realistic identity resolution success rates.
+  system_match_rates:
+    ga4_to_google_ads: 0.85        # GCLID linkage — high when consent given
+    ga4_to_meta: 0.60              # Requires email pixel match — moderate
+    crm_to_ga4: 0.55               # Email match from quote form → GA4 user_id — varies
+    crm_to_ams: 0.50               # Agent cooperation varies by agency
+    crm_to_pas: 0.85               # Name/address matching — high
+    esp_to_crm: 0.95               # Email is the key — very high
+    direct_mail_to_crm: 0.75       # Name/address matchback — good but not perfect
+    call_tracking_to_ga4: 0.70     # Web session → call correlation — when call tracking exists
+
+  # --- Cookie Behavior ---
+  cookie:
+    persistence_30day_rate: 0.70   # Range: 0.50–0.85
+                                   # Rationale: ~70% of first-party cookies survive 30 days.
+                                   # ITP/ETP browser policies and user clearing reduce this.
+    new_cookie_on_churn: true      # When cookie expires, prospect gets new GA4 client_id
+    cross_device_same_cookie: false # Different devices = different cookies (realistic)
+
+  # --- Call Tracking ---
+  call_tracking:
+    deployed: true                 # [TOGGLE] Is call tracking in use?
+    coverage_rate: 0.45            # Range: 0.0–1.0
+                                   # Rationale: Modeled as partially deployed.
+                                   # 45% of agent phone contacts are trackable.
+                                   # Set to 0.0 to simulate "no call tracking" scenario.
+                                   # Set to 0.85+ to simulate "well-deployed" scenario.
+    session_correlation_rate: 0.70 # Of tracked calls, % linkable to a web session
+
+
+# ----------------------------------------------------------------------------
+# 8. DATA QUALITY (DIRTY DATA INJECTION)
+# ----------------------------------------------------------------------------
+data_quality:
+
+  enabled: true                    # [TOGGLE] Master switch for all dirty data injection.
+                                   # Set to false for clean-data baseline comparison.
+
+  # Each issue type has a rate (fraction of affected records) and affected systems.
+  issues:
+
+    duplicate_crm_records:
+      rate: 0.04                   # Range: 0.01–0.08
+      description: "Same prospect, two CRM records (different email or typo in name)"
+
+    timestamp_mismatches:
+      rate: 0.025                  # Range: 0.01–0.05
+      max_drift_seconds: 7200      # ±2 hours max drift between systems
+      affected_systems: ["ga4", "google_ads"]
+      description: "Click timestamp in Google Ads doesn't match GA4 session start"
+
+    missing_fields:
+      rate: 0.06                   # Range: 0.02–0.12
+      affected_systems: ["crm", "ams"]
+      field_probabilities:         # Which fields are most likely to be missing
+        phone: 0.35
+        email: 0.25
+        agent_code: 0.20
+        address: 0.15
+        name: 0.05                 # Rare but happens (partial records)
+      description: "Null values in key identity/linkage fields"
+
+    stale_cookie_attribution:
+      rate: 0.015                  # Range: 0.005–0.03
+      description: "Shared device — cookie from previous user pollutes current user's journey"
+
+    agent_code_inconsistency:
+      rate: 0.05                   # Range: 0.02–0.08
+      description: "Same agent has different codes in AMS vs. PAS (agency mergers, system migrations)"
+
+    bot_fraud_traffic:
+      rate: 0.025                  # Range: 0.01–0.05
+      affected_systems: ["ga4", "ad_platforms"]
+      description: "Non-human sessions that inflate touchpoint counts and distort attribution"
+
+    retroactive_pas_updates:
+      rate: 0.035                  # Range: 0.01–0.06
+      max_backfill_days: 5         # Policy effective date up to 5 days before processing date
+      description: "Bind effective date ≠ processing date due to backfill/processing lag"
+
+    email_bounce_invalid:
+      rate: 0.06                   # Range: 0.03–0.10
+      description: "Email touchpoints recorded as sent but never delivered (hard bounces)"
+
+
+# ----------------------------------------------------------------------------
+# 9. ATTRIBUTION MODEL PARAMETERS
+# ----------------------------------------------------------------------------
+# These configure the three attribution contenders and comparison framework.
+# Separated from data generation so models can be re-run with different
+# settings without regenerating data.
+
+attribution:
+
+  # --- Attribution Windows ---
+  windows:
+    lookback_days: 30              # Range: 7–90
+                                   # Rationale: 30-day window captures the typical insurance
+                                   # shopping journey. Shorter windows miss upper-funnel.
+                                   # Longer windows introduce noise from stale touchpoints.
+    post_impression_window_days: 1 # View-through credit window for display/social impressions
+    post_click_window_days: 30     # Click-through credit window
+
+  # --- Shapley Parameters ---
+  shapley:
+    coalition_value_function: "inclusive"   # Options: "inclusive", "exclusive", "semi_exclusive"
+                                           # Rationale: Inclusive (Zhao et al. 2018 / Google DDA)
+                                           # avoids crippling data sparsity of exclusive formulation.
+    min_coalition_observations: 30         # Minimum journeys per coalition for stable estimation
+    sparse_coalition_handling: "adjacent_imputation"  # Options: "adjacent_imputation", "drop", "group"
+    time_weighting:
+      enabled: true
+      decay_type: "exponential"            # Options: "exponential", "linear", "step"
+      half_life_days: 7                    # Range: 3–14. Credit halves every 7 days from conversion.
+    casv_variant:
+      enabled: true                        # Singal et al. 2022 — Markov counterfactual + Shapley axioms
+      markov_order: 1                      # Order of underlying Markov chain for CASV
+
+  # --- Markov Chain Parameters ---
+  markov:
+    primary_order: 2                       # Range: 1–3. 2nd-order conditions on previous 2 channels.
+    comparison_orders: [1, 3]              # Also compute 1st and 3rd order for comparison
+    smoothing: "dirichlet"                 # Options: "dirichlet", "laplace", "none"
+    smoothing_alpha: 0.077                 # ≈ 1/13 (1/N channels) for Dirichlet
+    min_path_frequency: 5                  # Ignore paths observed fewer than 5 times
+    removal_effect_method: "standard"      # Options: "standard", "weighted" (by journey frequency)
+
+  # --- Constrained Convex Optimization Parameters ---
+  constrained_optimization:
+    objective: "logistic_likelihood"        # Options: "logistic_likelihood", "mse", "cross_entropy"
+    regularization:
+      type: "l2"                           # Options: "l2", "l1", "elastic_net"
+      lambda: 0.01                         # Range: 0.001–1.0. Regularization strength.
+
+    feature_encodings: ["binary", "count", "recency_weighted", "position_encoded"]
+    # All four encodings will be computed; primary results use "recency_weighted"
+    primary_encoding: "recency_weighted"
+
+    constraints:
+      non_negativity: true                 # w_i ≥ 0 for all channels
+      agent_floor:
+        enabled: true
+        beta: 1.5                          # Agent weight ≥ 1.5× average weight
+                                           # Range: 1.0–3.0
+                                           # Rationale: Reflects agent's known dominance without
+                                           # forcing a specific credit level. Let the optimizer decide
+                                           # how much MORE than the floor to give.
+      concentration_cap:
+        enabled: true
+        gamma: 0.30                        # No single non-agent channel > 30% of total credit
+                                           # Range: 0.15–0.50
+      scale_bound:
+        enabled: true
+
+    solver: "scipy_slsqp"                  # Options: "scipy_slsqp", "cvxpy"
+    report_dual_variables: true            # Shadow prices for constraint analysis
+
+  # --- MILP Budget Optimizer Parameters ---
+  budget_optimizer:
+    total_budget: 5000000                  # $5M annual marketing budget (realistic for regional carrier)
+
+    # [PRIMARY] Current spend allocation — the starting point the optimizer improves upon.
+    # Reflects a realistic channel mix for a 12-state regional P&C carrier.
+    current_allocation:
+      tv_radio: 1200000                    # 24% — Regional broadcast still significant in core PA/OH
+      display: 450000                      # 9% — Moderate programmatic presence
+      paid_social: 375000                  # 7.5% — Growing but not dominant
+      search_nonbrand: 750000              # 15% — Largest digital line item (high CPCs in insurance)
+      search_brand: 300000                 # 6% — Defensive brand term protection
+      email_nurture: 50000                 # 1% — Low direct cost (ESP + content)
+      direct_mail: 425000                  # 8.5% — Still significant for regional insurer
+      agent_support: 600000                # 12% — Co-op marketing, agent tools, lead gen
+      retargeting: 200000                  # 4% — Modest retargeting program
+      other_contingency: 650000            # 13% — PR, sponsorships, events (not optimizable)
+
+    # [PRIMARY] How close to diminishing returns ceiling at current spend levels.
+    # Range: 0.0 (no saturation) to 1.0 (fully saturated).
+    # Used to calibrate response curve parameters a_i and b_i:
+    #   a_i = attributed_conversions_i / saturation_factor_i
+    #   b_i = -ln(1 - saturation_factor_i) / current_spend_i
+    channel_saturation_factors:
+      tv_radio: 0.55                       # Broad reach but frequency-limited
+      display: 0.45                        # Large addressable audience; room to scale
+      paid_social: 0.50                    # Good targeting but audience fatigue
+      search_nonbrand: 0.70                # Constrained by search volume; relatively saturated
+      search_brand: 0.80                   # Very constrained — brand queries are finite
+      email_nurture: 0.60                  # Limited by list size and send frequency
+      direct_mail: 0.40                    # Large addressable universe; far from saturation
+      agent_support: 0.35                  # High ceiling — more support = more capacity
+      retargeting: 0.65                    # Limited by retargeting pool size
+      # seo_organic, referral_wom, agent_locator, erie_direct: N/A (earned/owned, not optimizable)
+
+    # [PRIMARY] Minimum viable spend per channel.
+    # Below these thresholds, a channel can't sustain a meaningful campaign.
+    channel_minimum_floors:
+      tv_radio: 200000                     # Below this, can't sustain GRPs in even one DMA
+      display: 50000                       # Minimum for programmatic with learning period
+      paid_social: 50000                   # Minimum for Meta campaign optimization
+      search_nonbrand: 100000              # Minimum competitive presence in insurance verticals
+      search_brand: 50000                  # Defensive — must protect brand terms
+      email_nurture: 10000                 # Minimal ESP costs
+      direct_mail: 50000                   # Minimum for a single targeted mailing
+      agent_support: 100000                # Minimum for meaningful agent marketing support
+      retargeting: 25000                   # Minimum for viable retargeting pool
+
+    # MILP constraint parameters
+    constraints:
+      max_reallocation_pct: 0.20           # ≤20% shift per channel per optimization cycle
+      min_active_channels: 8               # Must maintain at least 8 active channels
+      agent_support_floor_pct: 0.02        # Agent support ≥ 2% of total budget
+      tv_minimum_pct: 0.10                 # TV ≥ 10% of total (brand presence requirement)
+      search_nonbrand_cap_pct: 0.25        # Search NB ≤ 25% of total (prevent over-concentration)
+
+    response_curve_type: "saturating_exponential"  # Options: "saturating_exponential", "logistic", "linear"
+    piecewise_segments: 10                 # Segments for linearizing response curves in MILP
+    solver: "pulp_cbc"                     # Options: "pulp_cbc", "scipy_slsqp" (fallback)
+    report_dual_variables: true            # Extract shadow prices for constraint analysis
+
+  # --- Head-to-Head Comparison ---
+  comparison:
+    metrics: ["spearman_rho", "jensen_shannon", "axiom_compliance", "sensitivity"]
+    convergence_threshold_rho: 0.70        # Spearman ρ > 0.70 = meaningful convergence
+    sensitivity_perturbation_pct: 0.10     # ±10% parameter perturbation for stability testing
+    n_sensitivity_runs: 20                 # Number of perturbation runs
+
+
+# ----------------------------------------------------------------------------
+# 10. SCENARIO PRESETS
+# ----------------------------------------------------------------------------
+# Pre-configured parameter overrides for common "what-if" scenarios.
+# Each scenario modifies specific parameters from the defaults above.
+# Used in the Sensitivity & What-If Engine (Tier 3 of OR architecture).
+
+scenarios:
+
+  baseline:
+    description: "Current state — Erie's actual business model with all defaults"
+    overrides: {}                  # No changes — use all defaults
+
+  digital_transformation:
+    description: "What if Erie invested heavily in digital self-service?"
+    overrides:
+      funnel.agent_involvement_rate: 0.65
+      funnel.digital_only_bind_rate: 0.35
+      population.digital_sophistication.high: 0.50
+      population.digital_sophistication.low: 0.10
+
+  no_call_tracking:
+    description: "What if call tracking wasn't deployed at all?"
+    overrides:
+      identity.call_tracking.coverage_rate: 0.0
+      identity.fragmentation_distribution.partial_bridge: 0.0
+      identity.fragmentation_distribution.digital_only_no_agent_link: 0.33
+
+  full_call_tracking:
+    description: "What if call tracking was fully deployed?"
+    overrides:
+      identity.call_tracking.coverage_rate: 0.90
+      identity.fragmentation_distribution.partial_bridge: 0.30
+      identity.fragmentation_distribution.digital_only_no_agent_link: 0.05
+
+  cut_upper_funnel:
+    description: "What happens if TV/display budget is cut 50%?"
+    overrides:
+      state_interaction_matrix.tv_radio: [0.20, 0.08, 0.03, 0.01]
+      state_interaction_matrix.display: [0.12, 0.15, 0.10, 0.05]
+
+  agent_decline:
+    description: "What if agent involvement drops due to demographic shift?"
+    overrides:
+      funnel.agent_involvement_rate: 0.72
+      funnel.digital_only_bind_rate: 0.28
+      journey.state_transitions.intent: [0.25, 0.45, 0.30]
+
+  clean_data_baseline:
+    description: "No dirty data — isolate attribution model performance from data quality"
+    overrides:
+      data_quality.enabled: false
+
+
+# ============================================================================
+# END OF CONFIGURATION
+# ============================================================================
+#
+# QUICK START:
+#   1. Review Section 3 (Conversion Funnel) — especially agent_involvement_rate
+#   2. Review Section 5 (State Interaction Matrix) — the behavioral heart of the simulation
+#   3. Run: python generate_synthetic_data.py --config erie_mca_synth_config.yaml
+#   4. Validate: check output/validation_report.html for parameter conformance
+#   5. Adjust and re-run as needed
+#
+# PARAMETER SENSITIVITY:
+#   The three parameters with the MOST impact on attribution results:
+#   1. agent_involvement_rate — drives the "agent is under-credited" insight
+#   2. state_interaction_matrix (agent_interaction row) — how agent probability spikes near conversion
+#   3. identity.call_tracking.coverage_rate — how visible the digital-to-agent bridge is
+#
+# ============================================================================
